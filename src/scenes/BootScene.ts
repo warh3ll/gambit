@@ -71,6 +71,20 @@ export class BootScene extends Phaser.Scene {
     g.lineStyle(1, 0xffffff).strokeCircle(6, 6, 5);
     g.generateTexture('click-marker', 12, 12);
 
+    // Projectiles: wand bolt, arrow, firebolt.
+    g.clear();
+    g.fillStyle(0xc9a6ff).fillRect(0, 0, 4, 4);
+    g.fillStyle(0xffffff).fillRect(1, 1, 2, 2);
+    g.generateTexture('proj-wand', 4, 4);
+    g.clear();
+    g.fillStyle(0x8a6a44).fillRect(0, 1, 6, 1);
+    g.fillStyle(0xd9d9d9).fillRect(6, 0, 2, 3);
+    g.generateTexture('proj-bow', 8, 3);
+    g.clear();
+    g.fillStyle(0xd9542b).fillCircle(3, 3, 3);
+    g.fillStyle(0xffd27a).fillCircle(3, 3, 1.5);
+    g.generateTexture('proj-firebolt', 6, 6);
+
     this.makeTileset(g);
     g.destroy();
     this.scene.start('World');

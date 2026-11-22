@@ -20,8 +20,8 @@ export interface Combatant {
 }
 
 /** Everything a tactic row can look at when deciding whether to fire. */
-export interface TacticContext {
-  self: Combatant;
-  allies: Combatant[]; // includes self
-  enemies: Combatant[];
+export interface TacticContext<T extends Combatant = Combatant> {
+  self: T;
+  allies: T[]; // includes self
+  enemies: T[];
 }

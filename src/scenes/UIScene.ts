@@ -31,7 +31,6 @@ export class UIScene extends Phaser.Scene {
   private bounds = new Phaser.Geom.Rectangle();
   private nameLabel!: Phaser.GameObjects.Text;
   private banner!: Phaser.GameObjects.Text;
-  private combatHint!: Phaser.GameObjects.Text;
 
   constructor() {
     super('UI');
@@ -66,15 +65,6 @@ export class UIScene extends Phaser.Scene {
       .text(GAME_WIDTH / 2, 8, '', { ...TEXT_STYLE, fontSize: '10px', stroke: '#0d0b14', strokeThickness: 3 })
       .setOrigin(0.5, 0)
       .setVisible(false);
-    this.combatHint = this.add
-      .text(GAME_WIDTH / 2, 22, 'Combat actions arrive in M3 - press K to win this fight', {
-        ...TEXT_STYLE,
-        color: '#d8d0e8',
-        stroke: '#0d0b14',
-        strokeThickness: 3,
-      })
-      .setOrigin(0.5, 0)
-      .setVisible(false);
 
     this.party.on('leaderChanged', this.refreshLeader, this);
     this.combat.on('combatStart', this.onCombatStart, this);
@@ -103,12 +93,9 @@ export class UIScene extends Phaser.Scene {
   private onCombatStart() {
     this.tweens.killTweensOf(this.banner);
     this.banner.setText('COMBAT').setColor('#ff6b6b').setAlpha(1).setVisible(true);
-    // Temporary until M3: nobody acts in combat yet, so explain how to get out.
-    this.combatHint.setVisible(true);
   }
 
   private onCombatEnd(result: CombatResult) {
-    this.combatHint.setVisible(false);
     this.banner.setText(result === 'victory' ? 'VICTORY' : 'DEFEAT').setColor(result === 'victory' ? '#f2d16b' : '#b8b0c8');
     this.tweens.add({
       targets: this.banner,

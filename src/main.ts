@@ -4,7 +4,7 @@ import { BootScene } from './scenes/BootScene';
 import { UIScene } from './scenes/UIScene';
 import { WorldScene } from './scenes/WorldScene';
 
-new Phaser.Game({
+const game = new Phaser.Game({
   type: Phaser.AUTO,
   parent: 'game',
   width: GAME_WIDTH,
@@ -18,3 +18,6 @@ new Phaser.Game({
   },
   scene: [BootScene, WorldScene, UIScene],
 });
+
+// Dev builds only: expose the game for debugging in the browser console / automated tests.
+if (import.meta.env.DEV) (window as unknown as { __game: Phaser.Game }).__game = game;

@@ -1,7 +1,8 @@
 import Phaser from 'phaser';
 import { TILE_SIZE } from '../config';
 import { ENEMIES } from '../data/enemies';
-import { CombatManager } from '../systems/CombatManager';
+import { CombatManager, type CombatResult } from '../systems/CombatManager';
+import { CombatSystem } from '../systems/CombatSystem';
 import { Pathfinder } from '../systems/Pathfinder';
 import { Enemy } from '../world/Enemy';
 import { Party } from '../world/Party';
@@ -12,6 +13,8 @@ import type { UIScene } from './UIScene';
 export class WorldScene extends Phaser.Scene {
   party!: Party;
   combat!: CombatManager;
+  private combatSystem!: CombatSystem;
+  private spawnPoint!: { x: number; y: number };
   private enemies: Enemy[] = [];
   private leaderMarker!: Phaser.GameObjects.Image;
   private aggroDebug!: Phaser.GameObjects.Graphics;
@@ -28,10 +31,12 @@ export class WorldScene extends Phaser.Scene {
     map.createLayer(0, tileset, 0, 0)?.setDepth(0);
 
     const pathfinder = new Pathfinder(MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, (tx, ty) => !isBlocking(data[ty][tx]));
-    const spawn = pathfinder.tileCenter(SPAWN.x, SPAWN.y);
-    this.party = new Party(this, pathfinder, spawn);
+    this.spawnPoint = pathfinder.tileCenter(SPAWN.x, SPAWN.y);
+    this.party = new Party(this, pathfinder, this.spawnPoint);
     this.enemies = this.spawnEncounters(pathfinder);
     this.combat = new CombatManager(this.party, this.enemies);
+    this.combatSystem = new CombatSystem(this, pathfinder);
+    this.combat.on('combatEnd', (result: CombatResult, fought: Enemy[]) => this.onCombatEnd(result, fought));
 
     this.leaderMarker = this.add.image(0, 0, 'leader-marker').setDepth(10_000);
     this.aggroDebug = this.add.graphics().setDepth(2).setVisible(false);
@@ -53,13 +58,26 @@ export class WorldScene extends Phaser.Scene {
 
   update(_time: number, deltaMs: number) {
     const dt = Math.min(deltaMs / 1000, 0.1); // clamp so a hitch doesn't teleport anyone
+    for (const u of this.party.members) u.tickTimers(dt);
+    for (const e of this.enemies) e.tickTimers(dt);
+
+    this.combat.update(); // start / end fights
+    this.combatSystem.update(dt, this.party.members, [...this.combat.engaged], this.combat.inCombat);
     this.party.update(dt);
-    for (const e of this.enemies) e.update(dt, e.def.speed);
-    this.combat.update();
+    for (const e of this.enemies) e.update(dt, e.speed);
 
     const s = this.party.leader.sprite;
     this.leaderMarker.setPosition(s.x, s.y - s.height - 4);
     if (this.aggroDebug.visible) this.drawAggroRanges();
+  }
+
+  private onCombatEnd(result: CombatResult, fought: Enemy[]) {
+    this.combatSystem.clearProjectiles();
+    if (result !== 'defeat') return;
+    // Placeholder until defeat is designed: retry from the start, fight reset.
+    for (const e of fought) e.resetToHome();
+    this.party.respawn(this.spawnPoint);
+    this.cameras.main.fadeIn(800, 13, 11, 20);
   }
 
   private spawnEncounters(pathfinder: Pathfinder): Enemy[] {

@@ -13,7 +13,7 @@ export type CombatResult = 'victory' | 'defeat';
  * gets close to joins too. The party cannot leave a fight (no escape for now):
  * it ends when every engaged enemy, or every party member, is down.
  *
- * Events: 'combatStart' (enemies), 'groupJoined' (enemies), 'combatEnd' (result).
+ * Events: 'combatStart' (enemies), 'groupJoined' (enemies), 'combatEnd' (result, enemies fought).
  */
 export class CombatManager extends Phaser.Events.EventEmitter {
   /** Enemies taking part in the current fight. */
@@ -37,7 +37,7 @@ export class CombatManager extends Phaser.Events.EventEmitter {
     if (this.active) this.checkEnd();
   }
 
-  /** Debug helper until real combat exists (M3): defeats every engaged enemy. */
+  /** Debug helper: defeats every engaged enemy. */
   debugDefeatEngaged() {
     for (const e of this.engaged) e.takeDamage(e.hp);
   }
@@ -76,11 +76,16 @@ export class CombatManager extends Phaser.Events.EventEmitter {
     if (enemiesLeft && partyLeft) return;
 
     const result: CombatResult = partyLeft ? 'victory' : 'defeat';
+    const fought = [...this.engaged];
     this.active = false;
-    for (const e of this.engaged) e.showHpBar = false;
     this.engaged.clear();
+    for (const e of fought) {
+      e.showHpBar = false;
+      e.stop();
+      e.resetCombatState();
+    }
     this.party.exitCombat();
-    this.emit('combatEnd', result);
+    this.emit('combatEnd', result, fought);
   }
 }
 

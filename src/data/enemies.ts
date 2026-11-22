@@ -28,7 +28,7 @@ export const ENEMIES = {
   wolf: {
     id: 'wolf',
     name: 'Wolf',
-    maxHp: 45,
+    maxHp: 90,
     speed: 75,
     weapon: 'melee',
     threat: 1,
@@ -41,7 +41,7 @@ export const ENEMIES = {
   bandit: {
     id: 'bandit',
     name: 'Bandit',
-    maxHp: 70,
+    maxHp: 140,
     speed: 55,
     weapon: 'melee',
     threat: 2,
@@ -54,7 +54,7 @@ export const ENEMIES = {
   banditArcher: {
     id: 'banditArcher',
     name: 'Bandit Archer',
-    maxHp: 50,
+    maxHp: 100,
     speed: 55,
     weapon: 'bow',
     threat: 3,

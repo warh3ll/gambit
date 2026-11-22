@@ -13,7 +13,15 @@ Heal   | Any ally | HP below 50%
 
 During combat, rows are checked **from the top down**. The first row that is switched on,
 whose action is ready (off cooldown), and that finds a valid target, is the one that fires.
-If no row fires, the character waits.
+
+- **Getting in range:** the character walks towards the row's target until it is within the action's range,
+  then acts. Melee fighters walk up close; wand and bow users stop at their range.
+- **Skills on cooldown are skipped**, so a lower row gets its turn. The basic **Attack** is different:
+  between swings the row stays chosen and the character waits for its next swing.
+- **No row fires:** the character does nothing, but stays close to the rest of the party.
+- **Re-checking:** rows are re-checked several times a second, and right after every action.
+- **Outside combat** tactics keep running, but only on allies already in range (e.g. Hyne healing someone
+  standing next to her). Nobody walks off to do it. Cooldowns work the same as in a fight.
 
 Tactics can be edited at any time, **including in the middle of a fight** — combat pauses while the editor is open.
 
@@ -64,17 +72,25 @@ Everyone has **Attack**. What it does depends on the character's weapon type
 
 Oxleth the Bane is the support: **buffs** for allies, **debilitating debuffs** for enemies (more to come).
 
+Status effects:
+
+| Status | From | Effect |
+|---|---|---|
+| Taunted | Taunt | For 4s the enemy can only target whoever taunted it |
+| Hexed | Hex | Takes 25% more damage |
+| Warded | Ward | Takes 25% less damage |
+
 | Action | Used by | Targets | Effect | Range | Cooldown | Status |
 |---|---|---|---|---|---|---|
-| Attack | Everyone | Enemy | Weapon attack (see above) | Weapon | Weapon | ✅ data |
-| Taunt | Yasmi | Enemy | Enemy targets the user | 80 | 6s | ✅ data |
-| Heal | Hyne | Self, Ally | Restore 30 HP | 100 | 3s | ✅ data |
-| Hex | Oxleth | Enemy | Debuff: takes more damage for 6s | 100 | 8s | ✅ data |
-| Ward | Oxleth | Self, Ally | Buff: takes less damage for 6s | 100 | 8s | ✅ data |
-| Pierce | Arthur | Enemy | 18 damage | 32 | 4s | ✅ data |
-| Firebolt | Telara | Enemy | 16 damage | 120 | 2s | ✅ data |
+| Attack | Everyone | Enemy | Weapon attack (see above) | Weapon | Weapon | ✅ |
+| Taunt | Yasmi | Enemy | Enemy targets the user | 80 | 6s | ✅ |
+| Heal | Hyne | Self, Ally | Restore 45 HP | 100 | 3s | ✅ |
+| Hex | Oxleth | Enemy | Debuff: takes more damage for 6s | 100 | 8s | ✅ |
+| Ward | Oxleth | Self, Ally | Buff: takes less damage for 6s | 100 | 8s | ✅ |
+| Pierce | Arthur | Enemy | 18 damage | 32 | 4s | ✅ |
+| Firebolt | Telara | Enemy | 16 damage | 120 | 2s | ✅ |
 
-"✅ data" = defined, effect not yet working in combat (arrives in M3).
+All actions work in combat as of M3.
 
 ### Planned / ideas
 - *(add here)*

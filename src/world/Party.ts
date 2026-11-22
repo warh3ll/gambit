@@ -33,7 +33,7 @@ export class Party extends Phaser.Events.EventEmitter {
   /** Smoothed leader facing, so the formation doesn't snap around on every turn. */
   private formationAngle = Math.PI / 2;
   private followTimer = 0;
-  /** In combat the player can't move the party; tactics take over (M3). */
+  /** In combat the player can't move the party; tactics take over. */
   private inCombat = false;
 
   constructor(scene: Phaser.Scene, pathfinder: Pathfinder, spawn: Point) {
@@ -43,13 +43,32 @@ export class Party extends Phaser.Events.EventEmitter {
     this.leader = this.members.find((m) => m.def.id === DEFAULT_LEADER_ID) ?? this.members[0];
     this.speed = Math.min(...PARTY.map((d) => d.speed));
 
-    // Start everyone in formation.
+    this.placeAt(spawn);
+  }
+
+  /** Puts the party in formation around `p` (no walking). */
+  placeAt(p: Point) {
+    this.leader.x = p.x;
+    this.leader.y = p.y;
+    this.leader.stop();
+    this.leader.update(0, 0);
     this.followers.forEach((m, i) => {
       const slot = this.slotPosition(i);
       m.x = slot.x;
       m.y = slot.y;
+      m.stop();
       m.update(0, 0);
     });
+  }
+
+  /** After a defeat: everyone back on their feet at full HP, at `p`. */
+  respawn(p: Point) {
+    for (const m of this.members) {
+      m.revive(m.maxHp);
+      m.resetCombatState();
+      m.cooldowns.clear();
+    }
+    this.placeAt(p);
   }
 
   get followers(): PartyMember[] {
@@ -77,9 +96,15 @@ export class Party extends Phaser.Events.EventEmitter {
     }
   }
 
+  /** Fight over: the fallen get back up at 1 HP; damage carries over. */
   exitCombat() {
     this.inCombat = false;
-    for (const m of this.members) m.showHpBar = false;
+    for (const m of this.members) {
+      if (!m.alive) m.revive(1);
+      m.resetCombatState();
+      m.stop();
+      m.showHpBar = false;
+    }
     this.formationAngle = this.leader.facing;
     this.followTimer = FOLLOW_INTERVAL; // regroup right away
   }
@@ -95,7 +120,8 @@ export class Party extends Phaser.Events.EventEmitter {
 
   update(dt: number) {
     if (this.inCombat) {
-      for (const m of this.members) m.update(dt, 0); // combat movement arrives with tactics (M3)
+      // In a fight, CombatSystem decides where each member walks.
+      for (const m of this.members) m.update(dt, m.speed);
       return;
     }
     this.leader.update(dt, this.speed);

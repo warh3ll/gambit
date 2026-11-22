@@ -19,7 +19,7 @@ npm run preview   # serve the production build
 | Key | Effect |
 |---|---|
 | V | Show / hide enemy aggro ranges |
-| K | Defeat all enemies in the current fight (until real combat lands in M3) |
+| K | Instantly win the current fight |
 
 ## Docs
 

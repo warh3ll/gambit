@@ -157,6 +157,8 @@ export interface ActionDef {
   /** Seconds before the action can be used again, or 'weapon' for the weapon's attack interval. */
   cooldown: number | 'weapon';
   effect: ActionEffect;
+  /** Flies to the target as a projectile instead of landing instantly. (Attack uses the weapon's setting.) */
+  projectile?: boolean;
 }
 
 // NOTE: numbers below are placeholders until balancing.
@@ -187,7 +189,7 @@ export const ACTIONS = {
     groups: ['self', 'ally'],
     range: 100,
     cooldown: 3,
-    effect: { kind: 'heal', power: 30 },
+    effect: { kind: 'heal', power: 45 },
   },
   hex: {
     id: 'hex',
@@ -224,6 +226,7 @@ export const ACTIONS = {
     range: 120,
     cooldown: 2,
     effect: { kind: 'damage', power: 16 },
+    projectile: true,
   },
 } satisfies Record<string, ActionDef>;
 

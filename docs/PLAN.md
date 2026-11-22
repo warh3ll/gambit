@@ -44,6 +44,7 @@ refining those tactics.
 | `src/data/weapons.ts` | Weapon types (melee, wand, bow) that define the basic Attack |
 | `src/data/enemies.ts` | Enemy types: stats, aggro radius, preset tactics |
 | `src/systems/CombatManager.ts` | Starts fights on proximity, pulls in groups, ends fights |
+| `src/systems/CombatSystem.ts` | Runs tactics: picks rows, walks into range, performs actions, projectiles |
 | `src/world/` | Units (party members, enemies), party formation, placeholder test map + encounters |
 | `src/scenes/` | Phaser scenes: Boot (placeholder art), World (map + movement), UI (HUD/portraits) |
 | `docs/TACTICS.md` | Designer-facing list of tactics, planned and implemented |
@@ -84,10 +85,13 @@ More classes and characters can be found later in the game.
   HP bars show during combat (and whenever someone is hurt). The player can't move the party during a fight.
   Until M3 nobody acts in combat — use the debug key **K** to win a fight, **V** to show aggro ranges.
 
-### M3 — Combat driven by tactics
+### M3 — Combat driven by tactics ✅ *(branch `feature/combat-tactics`)*
 - Each party member re-evaluates tactics on a short tick, moves into range, performs the action.
 - Resolve effects: weapon attacks (melee strike / wand projectile), damage, heal, taunt, buffs/debuffs, cooldowns, death.
 - Enemies run on the same tactic system (with their own rows).
+- *Notes:* projectiles for wand, bow and Firebolt; coloured rings for heal / taunt / hex / ward.
+  HP numbers were roughly doubled so fights last long enough to watch (all placeholder).
+  Defeat is a placeholder: the party respawns at the start at full HP and that fight resets.
 
 ### M4 — Tactics editor
 - Per character: 10 rows of `Action | Target | Type` with dropdowns, an on/off toggle and reordering.
@@ -124,11 +128,16 @@ More classes and characters can be found later in the game.
 | 2026-11-22 | Fights start on proximity: when a party member gets within an enemy's aggro radius, that enemy's group joins. Any other group the party gets close to mid-fight joins too. |
 | 2026-11-22 | Each enemy type has preset tactic rows, built from the same Action/Target/Type pieces as the party. |
 | 2026-11-22 | No escaping fights for now: the party is locked in until one side is defeated. *(revisit later)* |
+| 2026-11-22 | In combat, characters walk to get their row's target in range (ranged stop at their range); no kiting. |
+| 2026-11-22 | Damage carries over between fights. Fallen characters get back up at 1 HP when a fight is won. |
+| 2026-11-22 | Tactics also run outside combat (e.g. healing), with the same cooldowns, on targets already in range. |
+| 2026-11-22 | If no row fires, the character stays with the party and does nothing. |
+| 2026-11-22 | Skills on cooldown are skipped (next row gets a turn); the basic Attack waits for its next swing instead. |
 
 ## Open questions for the designer
 
 1. **Progression** — are new Actions/Types unlocked over time (found, learned, bought), or all available from the start?
-2. **Defeat** — what happens when the party wipes? (Placeholder: retry the encounter.)
+2. **Defeat** — what happens when the party wipes? (Placeholder: respawn at the start at full HP, the fight resets.)
 3. **Art** — will you provide art, or should we start from a free placeholder pack?
 4. **Slice setting** — where and when in the story does the vertical slice happen?
 5. **Escape** — should the party ever be able to flee a fight? *(parked for later)*
