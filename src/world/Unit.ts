@@ -72,6 +72,8 @@ export class Unit implements Combatant {
   thinkTimer = 0;
   /** Seconds until the path to the current target is recalculated. */
   repathTimer = 0;
+  /** Seconds until a ranged unit may step back from a nearby enemy again. */
+  retreatTimer = 0;
   intent: Intent | null = null;
 
   private path: Point[] = [];
@@ -152,6 +154,7 @@ export class Unit implements Combatant {
     this.busy = Math.max(0, this.busy - dt);
     this.thinkTimer -= dt;
     this.repathTimer -= dt;
+    this.retreatTimer = Math.max(0, this.retreatTimer - dt);
   }
 
   // ── health ──
@@ -187,6 +190,7 @@ export class Unit implements Combatant {
     this.busy = 0;
     this.thinkTimer = 0;
     this.repathTimer = 0;
+    this.retreatTimer = 0;
   }
 
   update(dt: number, speed: number) {

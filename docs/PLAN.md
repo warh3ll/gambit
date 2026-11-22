@@ -128,7 +128,8 @@ More classes and characters can be found later in the game.
 | 2026-11-22 | Fights start on proximity: when a party member gets within an enemy's aggro radius, that enemy's group joins. Any other group the party gets close to mid-fight joins too. |
 | 2026-11-22 | Each enemy type has preset tactic rows, built from the same Action/Target/Type pieces as the party. |
 | 2026-11-22 | No escaping fights for now: the party is locked in until one side is defeated. *(revisit later)* |
-| 2026-11-22 | In combat, characters walk to get their row's target in range (ranged stop at their range); no kiting. |
+| 2026-11-22 | In combat, characters walk to get their row's target in range; ranged stop at their range. |
+| 2026-11-22 | Ranged attackers keep their distance: they step back when an enemy gets close (max once per 2s), staying in range. |
 | 2026-11-22 | Damage carries over between fights. Fallen characters get back up at 1 HP when a fight is won. |
 | 2026-11-22 | Tactics also run outside combat (e.g. healing), with the same cooldowns, on targets already in range. |
 | 2026-11-22 | If no row fires, the character stays with the party and does nothing. |

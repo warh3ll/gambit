@@ -16,6 +16,9 @@ whose action is ready (off cooldown), and that finds a valid target, is the one 
 
 - **Getting in range:** the character walks towards the row's target until it is within the action's range,
   then acts. Melee fighters walk up close; wand and bow users stop at their range.
+- **Ranged keep their distance:** when an enemy gets close, a ranged attacker steps back (staying in range
+  of its target), then shoots. At most one step back every 2 seconds, so it can't run forever; a faster
+  enemy will catch up, and that's where a tank's Taunt comes in. Enemy archers do the same.
 - **Skills on cooldown are skipped**, so a lower row gets its turn. The basic **Attack** is different:
   between swings the row stays chosen and the character waits for its next swing.
 - **No row fires:** the character does nothing, but stays close to the rest of the party.

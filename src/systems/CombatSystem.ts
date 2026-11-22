@@ -18,6 +18,14 @@ const REGROUP_DISTANCE = 36;
 /** Fighters closer than this get nudged apart so they don't stack. */
 const SEPARATION = 12;
 const PROJECTILE_SPEED = 200;
+/** Hostile actions with at least this range count as ranged: their users keep their distance. */
+const RANGED_MIN = 60;
+/** Ranged units step back when an enemy gets closer than this. */
+const KEEP_AWAY = 48;
+/** How far a ranged unit steps back each time. */
+const RETREAT_STEP = 40;
+/** Seconds between step-backs, so ranged units still get to shoot (and can't run forever). */
+const RETREAT_COOLDOWN = 2;
 const TAUNT_DURATION = 4;
 
 /** Damage multipliers from statuses. */
@@ -43,6 +51,8 @@ export class CombatSystem {
   private readonly scene: Phaser.Scene;
   private readonly pathfinder: Pathfinder;
   private projectiles: Projectile[] = [];
+  /** Units currently stepping back from an enemy. */
+  private readonly retreating = new WeakSet<Unit>();
 
   constructor(scene: Phaser.Scene, pathfinder: Pathfinder) {
     this.scene = scene;
@@ -110,6 +120,8 @@ export class CombatSystem {
     }
 
     const range = this.actionRange(u, action);
+    const hostile = target.side !== u.side;
+    if (hostile && range >= RANGED_MIN && this.keepDistance(u, ctx.enemies, target, range)) return;
     if (target !== u && dist(u, target) > range + RANGE_SLACK) {
       this.chase(u, target);
       return;
@@ -150,6 +162,33 @@ export class CombatSystem {
     u.repathTimer = REPATH_INTERVAL;
     const path = this.pathfinder.findPath(u, target);
     if (path) u.setPath(path);
+  }
+
+  /**
+   * Ranged units step back when an enemy is too close, as long as their target stays in range.
+   * Returns true while stepping back (the unit doesn't act during the step).
+   */
+  private keepDistance(u: Unit, foes: Unit[], target: Unit, range: number): boolean {
+    if (this.retreating.has(u)) {
+      if (u.moving) return true; // finish the current step
+      this.retreating.delete(u);
+    }
+    if (u.retreatTimer > 0) return false;
+    let threat: Unit | null = null;
+    for (const f of foes) if (f.alive && dist(u, f) < KEEP_AWAY && (!threat || dist(u, f) < dist(u, threat))) threat = f;
+    if (!threat) return false;
+
+    const away = Math.atan2(u.y - threat.y, u.x - threat.x);
+    for (const turn of [0, 0.6, -0.6, 1.2, -1.2]) {
+      const p = { x: u.x + Math.cos(away + turn) * RETREAT_STEP, y: u.y + Math.sin(away + turn) * RETREAT_STEP };
+      if (dist(p, target) > range) continue;
+      if (!this.pathfinder.isWalkableWorld(p.x, p.y) || !this.pathfinder.lineOfSight(u, p)) continue;
+      u.setPath([p]);
+      u.retreatTimer = RETREAT_COOLDOWN;
+      this.retreating.add(u);
+      return true;
+    }
+    return false; // cornered: stand and fight
   }
 
   private regroup(u: Unit, allies: Unit[]) {
