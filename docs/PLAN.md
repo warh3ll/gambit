@@ -67,6 +67,7 @@ More classes and characters can be found later in the game.
 - Placeholder tile map with obstacles, camera follows the party.
 - Click to move the designated leader; the rest of the party follows in formation, with pathfinding around obstacles.
 - Click marker / feedback.
+- Party portraits on screen; clicking a portrait makes that character the leader.
 
 ### M2 — Enemies & engagement
 - Enemies placed in the world, with an aggro radius.
@@ -81,7 +82,7 @@ More classes and characters can be found later in the game.
 ### M4 — Tactics editor
 - Per character: 10 rows of `Action | Target | Type` with dropdowns, an on/off toggle and reordering.
 - Only offers actions the character knows and types that fit the chosen target.
-- Can be opened at any time, including mid-fight.
+- Can be opened at any time, including mid-fight; combat pauses while it is open.
 
 ### M5 — Readability of combat
 - Highlight which row fired for each character (key for debugging your "program").
@@ -106,16 +107,15 @@ More classes and characters can be found later in the game.
 | 2026-11-22 | Every skill has a short cooldown. The basic Attack is paced by the weapon's attack interval. |
 | 2026-11-22 | The basic Attack depends on weapon type: **melee** for Yasmi, Hyne and Arthur; **ranged wand** for Oxleth and Telara. |
 | 2026-11-22 | Tactics can be edited during a fight, not only between fights. |
-| 2026-11-22 | The party follows a designated leader in formation. Default leader: Yasmi *(placeholder)*. |
+| 2026-11-22 | The party follows a designated leader in formation. Default leader: Yasmi. The player switches leader by clicking a character's portrait. |
+| 2026-11-22 | Combat pauses while the tactics editor is open. |
 | 2026-11-22 | Oxleth the Bane: buffs for allies, debilitating debuffs for enemies. More abilities to come. |
 | 2026-11-22 | "Any ally" includes the character itself; "Other ally" excludes it. |
 
 ## Open questions for the designer
 
-1. **Editing mid-fight** — does combat pause while the tactics editor is open, or keep running in the background? (Suggestion: pause.)
-2. **Leader** — who leads by default, and can the player switch leader (e.g. by clicking a portrait)?
-3. **Progression** — are new Actions/Types unlocked over time (found, learned, bought), or all available from the start?
-4. **Defeat** — what happens when the party wipes? (Placeholder: retry the encounter.)
-5. **Art** — will you provide art, or should we start from a free placeholder pack?
-6. **Enemies** — should enemies use the same tactic system? (Recommended: yes — it lets us design enemies by writing rows.)
-7. **Slice setting** — where and when in the story does the vertical slice happen?
+1. **Progression** — are new Actions/Types unlocked over time (found, learned, bought), or all available from the start?
+2. **Defeat** — what happens when the party wipes? (Placeholder: retry the encounter.)
+3. **Art** — will you provide art, or should we start from a free placeholder pack?
+4. **Enemies** — should enemies use the same tactic system? (Recommended: yes — it lets us design enemies by writing rows.)
+5. **Slice setting** — where and when in the story does the vertical slice happen?

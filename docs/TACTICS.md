@@ -15,7 +15,7 @@ During combat, rows are checked **from the top down**. The first row that is swi
 whose action is ready (off cooldown), and that finds a valid target, is the one that fires.
 If no row fires, the character waits.
 
-Tactics can be edited at any time, **including in the middle of a fight**.
+Tactics can be edited at any time, **including in the middle of a fight** — combat pauses while the editor is open.
 
 The implementation lives in [`src/data/tactics.ts`](../src/data/tactics.ts). This page is the
 design-side list — add ideas to the *Planned* sections and they'll get built.
