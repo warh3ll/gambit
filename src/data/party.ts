@@ -1,4 +1,5 @@
 import { type ActionId, type TacticRow, row } from './tactics';
+import type { WeaponId } from './weapons';
 
 export type ClassId = 'crusader' | 'cleric' | 'bane' | 'pikeman' | 'wizard';
 export type Role = 'tank' | 'healer' | 'support' | 'melee' | 'magic';
@@ -10,6 +11,8 @@ export interface CharacterDef {
   className: string;
   role: Role;
   maxHp: number;
+  /** Decides what the basic Attack does (melee strike or wand bolt). */
+  weapon: WeaponId;
   /** Movement speed in pixels per second. */
   speed: number;
   /** Actions this character knows (the tactics editor only offers these). */
@@ -20,6 +23,9 @@ export interface CharacterDef {
   color: number;
 }
 
+/** The character the rest of the party follows when moving. */
+export const DEFAULT_LEADER_ID = 'yasmi';
+
 // NOTE: stats are placeholders until balancing.
 export const PARTY: CharacterDef[] = [
   {
@@ -28,6 +34,7 @@ export const PARTY: CharacterDef[] = [
     classId: 'crusader',
     className: 'Crusader',
     role: 'tank',
+    weapon: 'melee',
     maxHp: 160,
     speed: 60,
     actions: ['attack', 'taunt'],
@@ -40,6 +47,7 @@ export const PARTY: CharacterDef[] = [
     classId: 'cleric',
     className: 'Cleric',
     role: 'healer',
+    weapon: 'melee',
     maxHp: 90,
     speed: 60,
     actions: ['attack', 'heal'],
@@ -52,6 +60,7 @@ export const PARTY: CharacterDef[] = [
     classId: 'bane',
     className: 'Bane',
     role: 'support',
+    weapon: 'wand',
     maxHp: 100,
     speed: 60,
     actions: ['attack', 'hex', 'ward'],
@@ -64,6 +73,7 @@ export const PARTY: CharacterDef[] = [
     classId: 'pikeman',
     className: 'Pikeman',
     role: 'melee',
+    weapon: 'melee',
     maxHp: 120,
     speed: 65,
     actions: ['attack', 'pierce'],
@@ -76,6 +86,7 @@ export const PARTY: CharacterDef[] = [
     classId: 'wizard',
     className: 'Wizard',
     role: 'magic',
+    weapon: 'wand',
     maxHp: 80,
     speed: 60,
     actions: ['attack', 'firebolt'],

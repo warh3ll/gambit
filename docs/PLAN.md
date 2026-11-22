@@ -65,7 +65,7 @@ More classes and characters can be found later in the game.
 
 ### M1 — World & movement
 - Placeholder tile map with obstacles, camera follows the party.
-- Click to move; the party follows the leader in formation, with pathfinding around obstacles.
+- Click to move the designated leader; the rest of the party follows in formation, with pathfinding around obstacles.
 - Click marker / feedback.
 
 ### M2 — Enemies & engagement
@@ -75,13 +75,13 @@ More classes and characters can be found later in the game.
 
 ### M3 — Combat driven by tactics
 - Each party member re-evaluates tactics on a short tick, moves into range, performs the action.
-- Resolve effects: damage, heal, taunt, buffs/debuffs, cooldowns, death.
+- Resolve effects: weapon attacks (melee strike / wand projectile), damage, heal, taunt, buffs/debuffs, cooldowns, death.
 - Enemies run on the same tactic system (with their own rows).
 
 ### M4 — Tactics editor
 - Per character: 10 rows of `Action | Target | Type` with dropdowns, an on/off toggle and reordering.
 - Only offers actions the character knows and types that fit the chosen target.
-- Opened from a menu outside combat (and maybe in combat, see open questions).
+- Can be opened at any time, including mid-fight.
 
 ### M5 — Readability of combat
 - Highlight which row fired for each character (key for debugging your "program").
@@ -102,17 +102,20 @@ More classes and characters can be found later in the game.
 | Date | Decision |
 |---|---|
 | 2026-11-22 | Phaser 4 + TypeScript + Vite. 480×270 internal resolution, 16px tiles. |
-| 2026-11-22 | Tactic rows are evaluated top to bottom; the first row that can fire wins. *(to confirm)* |
-| 2026-11-22 | "Any ally" includes the character itself; "Other ally" excludes it. *(to confirm)* |
+| 2026-11-22 | Tactic rows are evaluated top to bottom; the first row that is on, off cooldown and has a valid target fires. |
+| 2026-11-22 | Every skill has a short cooldown. The basic Attack is paced by the weapon's attack interval. |
+| 2026-11-22 | The basic Attack depends on weapon type: **melee** for Yasmi, Hyne and Arthur; **ranged wand** for Oxleth and Telara. |
+| 2026-11-22 | Tactics can be edited during a fight, not only between fights. |
+| 2026-11-22 | The party follows a designated leader in formation. Default leader: Yasmi *(placeholder)*. |
+| 2026-11-22 | Oxleth the Bane: buffs for allies, debilitating debuffs for enemies. More abilities to come. |
+| 2026-11-22 | "Any ally" includes the character itself; "Other ally" excludes it. |
 
 ## Open questions for the designer
 
-1. **Row priority** — is "top row wins, first match fires" the rule you want?
-2. **Pausing** — can the player pause during combat and edit tactics, or only between fights?
-3. **Movement** — does the party follow one leader in formation? Who leads, and can the player change it?
-4. **Oxleth the Bane** — what is the support identity? (Placeholder: Hex debuffs enemies, Ward shields allies.)
-5. **Progression** — are new Actions/Types unlocked over time (found, learned, bought), or all available from the start?
-6. **Defeat** — what happens when the party wipes? (Placeholder: retry the encounter.)
-7. **Art** — will you provide art, or should we start from a free placeholder pack?
-8. **Enemies** — should enemies use the same tactic system? (Recommended: yes — it lets us design enemies by writing rows.)
-9. **Slice setting** — where and when in the story does the vertical slice happen?
+1. **Editing mid-fight** — does combat pause while the tactics editor is open, or keep running in the background? (Suggestion: pause.)
+2. **Leader** — who leads by default, and can the player switch leader (e.g. by clicking a portrait)?
+3. **Progression** — are new Actions/Types unlocked over time (found, learned, bought), or all available from the start?
+4. **Defeat** — what happens when the party wipes? (Placeholder: retry the encounter.)
+5. **Art** — will you provide art, or should we start from a free placeholder pack?
+6. **Enemies** — should enemies use the same tactic system? (Recommended: yes — it lets us design enemies by writing rows.)
+7. **Slice setting** — where and when in the story does the vertical slice happen?

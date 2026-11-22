@@ -139,6 +139,7 @@ export type TypeId = keyof typeof TYPES;
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type ActionEffect =
+  | { kind: 'weaponAttack' } // damage, range and speed come from the character's weapon
   | { kind: 'damage'; power: number }
   | { kind: 'heal'; power: number }
   | { kind: 'taunt' }
@@ -151,23 +152,24 @@ export interface ActionDef {
   description: string;
   /** Which target groups this action may be pointed at. */
   groups: TargetGroup[];
-  /** Range in pixels. */
-  range: number;
-  /** Seconds before the action can be used again. 0 = basic action. */
-  cooldown: number;
+  /** Range in pixels, or 'weapon' to use the character's weapon range. */
+  range: number | 'weapon';
+  /** Seconds before the action can be used again, or 'weapon' for the weapon's attack interval. */
+  cooldown: number | 'weapon';
   effect: ActionEffect;
 }
 
 // NOTE: numbers below are placeholders until balancing.
+// Every skill has a cooldown; the basic Attack is paced by the weapon's attack interval.
 export const ACTIONS = {
   attack: {
     id: 'attack',
     label: 'Attack',
-    description: 'Basic attack with the equipped weapon.',
+    description: 'Basic attack with the equipped weapon (melee or wand).',
     groups: ['enemy'],
-    range: 20,
-    cooldown: 0,
-    effect: { kind: 'damage', power: 10 },
+    range: 'weapon',
+    cooldown: 'weapon',
+    effect: { kind: 'weaponAttack' },
   },
   taunt: {
     id: 'taunt',
@@ -190,7 +192,7 @@ export const ACTIONS = {
   hex: {
     id: 'hex',
     label: 'Hex',
-    description: 'Curses an enemy so it takes more damage.',
+    description: 'Debuff: curses an enemy so it takes more damage.',
     groups: ['enemy'],
     range: 100,
     cooldown: 8,
@@ -199,7 +201,7 @@ export const ACTIONS = {
   ward: {
     id: 'ward',
     label: 'Ward',
-    description: 'Shields an ally so it takes less damage.',
+    description: 'Buff: shields an ally so it takes less damage.',
     groups: ['self', 'ally'],
     range: 100,
     cooldown: 8,
