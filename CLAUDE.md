@@ -8,6 +8,9 @@
 
 ## Project
 - Phaser 4 + TypeScript + Vite. `npm run dev`, `npm run build` (typecheck + build).
+- Dev server is always http://localhost:8080 (strictPort) and the designer keeps a tab open on it.
+  Reuse that server for browser testing; if it isn't running, start `npm run dev` in the background
+  and leave it running. Never start a second dev server on another port, and never kill the 8080 one.
 - Pixel art: 480×270 internal resolution, 16px tiles, `pixelArt: true`.
 - All tactic building blocks (Actions, Targets, Types) live in `src/data/tactics.ts`.
   Keep `docs/TACTICS.md` in sync when adding or changing one.
