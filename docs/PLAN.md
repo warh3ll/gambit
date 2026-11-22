@@ -40,7 +40,10 @@ refining those tactics.
 | `src/data/tactics.ts` | **All tactic pieces**: Actions, Targets, Types, tactic row format |
 | `src/data/party.ts` | The party: stats, known actions, default tactics |
 | `src/systems/TacticEngine.ts` | Picks which tactic row fires (top to bottom, first match) |
-| `src/scenes/` | Phaser scenes (Boot, World, …) |
+| `src/systems/Pathfinder.ts` | A* pathfinding on the tile grid + path smoothing |
+| `src/data/weapons.ts` | Weapon types (melee, wand) that define the basic Attack |
+| `src/world/` | Party, party members, formation, placeholder test map |
+| `src/scenes/` | Phaser scenes: Boot (placeholder art), World (map + movement), UI (HUD/portraits) |
 | `docs/TACTICS.md` | Designer-facing list of tactics, planned and implemented |
 
 ## Party (first iteration)
@@ -63,11 +66,13 @@ More classes and characters can be found later in the game.
 - Party data with placeholder stats and default tactics.
 - Placeholder scene showing the party.
 
-### M1 — World & movement
+### M1 — World & movement ✅ *(branch `feature/world-movement`)*
 - Placeholder tile map with obstacles, camera follows the party.
 - Click to move the designated leader; the rest of the party follows in formation, with pathfinding around obstacles.
 - Click marker / feedback.
 - Party portraits on screen; clicking a portrait makes that character the leader.
+- *Notes:* the party walks at its slowest member's speed; followers sprint to catch up when far behind.
+  The map is generated in code for now; we switch to Tiled maps when building real slice content (M6).
 
 ### M2 — Enemies & engagement
 - Enemies placed in the world, with an aggro radius.

@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from './config';
 import { BootScene } from './scenes/BootScene';
+import { UIScene } from './scenes/UIScene';
 import { WorldScene } from './scenes/WorldScene';
 
 new Phaser.Game({
@@ -15,5 +16,5 @@ new Phaser.Game({
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
-  scene: [BootScene, WorldScene],
+  scene: [BootScene, WorldScene, UIScene],
 });
