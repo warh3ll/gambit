@@ -12,7 +12,8 @@
   Reuse that server for browser testing; if it isn't running, start `npm run dev` in the background
   and leave it running. Never start a second dev server on another port, and never kill the 8080 one.
 - In dev builds the Phaser game is exposed as `window.__game` (for console debugging / automated checks).
-- Pixel art: 480×270 internal resolution, 16px tiles, `pixelArt: true`.
+- Pixel art: canvas fills the window; scenes use `pixelCamera()` (src/view.ts) for a whole-number zoom
+  (~360 game px tall). Lay out UI in game pixels from the view size, never fixed screen sizes. 16px tiles.
 - All tactic building blocks (Actions, Targets, Types) live in `src/data/tactics.ts`.
   Keep `docs/TACTICS.md` in sync when adding or changing one.
 - Build output must work from a relative path (itch.io embed) — keep `base: './'` in `vite.config.ts`.

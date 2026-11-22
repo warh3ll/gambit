@@ -28,7 +28,7 @@ refining those tactics.
 |---|---|
 | Engine | Phaser 4 (`phaser@4.2.1`) |
 | Language | TypeScript, bundled with Vite |
-| Resolution | 480×270 internal, scaled to fit the window (pixel-perfect) |
+| Resolution | Canvas fills the browser window (any aspect, incl. ultrawide). Whole-number pixel zoom so ~360 world px fit top to bottom (1080p → 3×, 1440p → 4×); wider screens see more. UI text at full resolution. |
 | Tile size | 16×16 |
 | Maps | Tiled (`.tmj`) once we move past placeholder maps |
 | Release | `npm run build` → zip `dist/` → upload as HTML5 game on itch.io |
@@ -116,7 +116,8 @@ More classes and characters can be found later in the game.
 
 | Date | Decision |
 |---|---|
-| 2026-11-22 | Phaser 4 + TypeScript + Vite. 480×270 internal resolution, 16px tiles. |
+| 2026-11-22 | Phaser 4 + TypeScript + Vite. 16px tiles. |
+| 2026-11-22 | Full-window canvas with whole-number pixel zoom (~360 world px tall); crisp UI text in Pixelify Sans. Replaces the fixed 480×270 canvas, which felt too pixelly. |
 | 2026-11-22 | Tactic rows are evaluated top to bottom; the first row that is on, off cooldown and has a valid target fires. |
 | 2026-11-22 | Every skill has a short cooldown. The basic Attack is paced by the weapon's attack interval. |
 | 2026-11-22 | The basic Attack depends on weapon type: **melee** for Yasmi, Hyne and Arthur; **ranged wand** for Oxleth and Telara. |

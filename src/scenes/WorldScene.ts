@@ -7,6 +7,7 @@ import { Pathfinder } from '../systems/Pathfinder';
 import { Enemy } from '../world/Enemy';
 import { Party } from '../world/Party';
 import { ENCOUNTERS, MAP_HEIGHT, MAP_WIDTH, SPAWN, buildTestMap, isBlocking } from '../world/testMap';
+import { pixelCamera } from '../view';
 import type { UIScene } from './UIScene';
 
 /** The explorable world: map, party movement, enemies and camera. */
@@ -41,6 +42,7 @@ export class WorldScene extends Phaser.Scene {
     this.leaderMarker = this.add.image(0, 0, 'leader-marker').setDepth(10_000);
     this.aggroDebug = this.add.graphics().setDepth(2).setVisible(false);
 
+    pixelCamera(this, false);
     const cam = this.cameras.main;
     cam.setBounds(0, 0, MAP_WIDTH * TILE_SIZE, MAP_HEIGHT * TILE_SIZE);
     cam.startFollow(this.party.leader.sprite, true, 0.12, 0.12);
@@ -98,7 +100,7 @@ export class WorldScene extends Phaser.Scene {
   private onClick(pointer: Phaser.Input.Pointer) {
     if (!pointer.leftButtonDown()) return;
     const ui = this.scene.get('UI') as UIScene;
-    if (ui.isOverUI(pointer.x, pointer.y)) return;
+    if (ui.isOverUI(pointer)) return;
     if (this.combat.inCombat) return; // the party follows its tactics in a fight
 
     // Convert via this scene's camera explicitly (worldX may come from the UI scene's camera).

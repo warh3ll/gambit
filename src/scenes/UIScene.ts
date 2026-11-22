@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
-import { GAME_HEIGHT, GAME_WIDTH } from '../config';
 import type { CombatManager, CombatResult } from '../systems/CombatManager';
+import { textStyle, pixelCamera, type ViewSize } from '../view';
 import type { Party } from '../world/Party';
 import type { PartyMember } from '../world/PartyMember';
 import { PORTRAIT_SIZE } from './BootScene';
@@ -13,15 +13,9 @@ interface PortraitView {
   member: PartyMember;
   frame: Phaser.GameObjects.Image;
   face: Phaser.GameObjects.Image;
+  hpBack: Phaser.GameObjects.Rectangle;
   hpBar: Phaser.GameObjects.Rectangle;
 }
-
-const TEXT_STYLE: Phaser.Types.GameObjects.Text.TextStyle = {
-  fontFamily: 'monospace',
-  fontSize: '8px',
-  color: '#ffffff',
-  resolution: 4,
-};
 
 /** HUD on top of the world: party portraits (click to change leader) and combat banner. */
 export class UIScene extends Phaser.Scene {
@@ -31,6 +25,7 @@ export class UIScene extends Phaser.Scene {
   private bounds = new Phaser.Geom.Rectangle();
   private nameLabel!: Phaser.GameObjects.Text;
   private banner!: Phaser.GameObjects.Text;
+  private hint!: Phaser.GameObjects.Text;
 
   constructor() {
     super('UI');
@@ -43,26 +38,22 @@ export class UIScene extends Phaser.Scene {
   }
 
   create() {
-    const y = GAME_HEIGHT - MARGIN - PORTRAIT_SIZE - 4; // room for the HP bar
-    this.party.members.forEach((member, i) => {
-      const x = MARGIN + i * (PORTRAIT_SIZE + GAP);
-      const frame = this.add.image(x, y, 'frame').setOrigin(0).setInteractive({ useHandCursor: true });
-      const face = this.add.image(x + 2, y + 2, `portrait-${member.def.id}`).setOrigin(0);
-      this.add.rectangle(x, y + PORTRAIT_SIZE + 1, PORTRAIT_SIZE, 3, 0x0d0b14).setOrigin(0);
-      const hpBar = this.add.rectangle(x + 1, y + PORTRAIT_SIZE + 2, HP_WIDTH, 1, 0x6bd96b).setOrigin(0);
-
+    for (const member of this.party.members) {
+      const frame = this.add.image(0, 0, 'frame').setOrigin(0).setInteractive({ useHandCursor: true });
+      const face = this.add.image(0, 0, `portrait-${member.def.id}`).setOrigin(0);
+      const hpBack = this.add.rectangle(0, 0, PORTRAIT_SIZE, 3, 0x0d0b14).setOrigin(0);
+      const hpBar = this.add.rectangle(0, 0, HP_WIDTH, 1, 0x6bd96b).setOrigin(0);
+      const view = { member, frame, face, hpBack, hpBar };
       frame.on('pointerdown', () => this.party.setLeader(member.def.id));
-      frame.on('pointerover', () => this.showName(member, x));
+      frame.on('pointerover', () => this.showName(view));
       frame.on('pointerout', () => this.nameLabel.setVisible(false));
-      this.portraits.push({ member, frame, face, hpBar });
-    });
+      this.portraits.push(view);
+    }
 
-    const width = this.party.members.length * (PORTRAIT_SIZE + GAP) - GAP;
-    this.bounds.setTo(MARGIN, y, width, PORTRAIT_SIZE + 4);
-
-    this.nameLabel = this.add.text(0, y - 3, '', TEXT_STYLE).setOrigin(0.5, 1).setVisible(false);
+    this.nameLabel = this.add.text(0, 0, '', textStyle(8)).setOrigin(0.5, 1).setVisible(false);
+    this.hint = this.add.text(0, 0, '[T] Tactics', textStyle(8, '#b8b0c8')).setOrigin(0, 1);
     this.banner = this.add
-      .text(GAME_WIDTH / 2, 8, '', { ...TEXT_STYLE, fontSize: '10px', stroke: '#0d0b14', strokeThickness: 3 })
+      .text(0, 8, '', textStyle(12, '#ffffff', { fontStyle: 'bold', stroke: '#0d0b14', strokeThickness: 3 }))
       .setOrigin(0.5, 0)
       .setVisible(false);
 
@@ -74,6 +65,8 @@ export class UIScene extends Phaser.Scene {
       this.combat.off('combatStart', this.onCombatStart, this);
       this.combat.off('combatEnd', this.onCombatEnd, this);
     });
+
+    pixelCamera(this, true, (view) => this.layout(view));
     this.refreshLeader();
   }
 
@@ -85,9 +78,27 @@ export class UIScene extends Phaser.Scene {
     }
   }
 
-  /** True if a screen-space point is over HUD elements (so the world should ignore the click). */
-  isOverUI(x: number, y: number): boolean {
-    return this.bounds.contains(x, y);
+  /** True if the pointer is over HUD elements (so the world should ignore the click). */
+  isOverUI(pointer: Phaser.Input.Pointer): boolean {
+    const p = pointer.positionToCamera(this.cameras.main) as Phaser.Math.Vector2;
+    return this.bounds.contains(p.x, p.y);
+  }
+
+  /** Positions everything for the current view size (game pixels). */
+  private layout(view: ViewSize) {
+    const y = view.height - MARGIN - PORTRAIT_SIZE - 4; // room for the HP bar
+    this.portraits.forEach((p, i) => {
+      const x = MARGIN + i * (PORTRAIT_SIZE + GAP);
+      p.frame.setPosition(x, y);
+      p.face.setPosition(x + 2, y + 2);
+      p.hpBack.setPosition(x, y + PORTRAIT_SIZE + 1);
+      p.hpBar.setPosition(x + 1, y + PORTRAIT_SIZE + 2);
+    });
+    const width = this.portraits.length * (PORTRAIT_SIZE + GAP) - GAP;
+    this.bounds.setTo(MARGIN, y, width, PORTRAIT_SIZE + 4);
+    this.nameLabel.setY(y - 3);
+    this.hint.setPosition(MARGIN + width + 8, view.height - MARGIN);
+    this.banner.setX(view.width / 2);
   }
 
   private onCombatStart() {
@@ -110,11 +121,11 @@ export class UIScene extends Phaser.Scene {
     for (const p of this.portraits) p.frame.setTexture(p.member === this.party.leader ? 'frame-leader' : 'frame');
   }
 
-  private showName(member: PartyMember, x: number) {
-    const leader = member === this.party.leader ? ' (leader)' : '';
+  private showName(p: PortraitView) {
+    const leader = p.member === this.party.leader ? ' (leader)' : '';
     this.nameLabel
-      .setText(`${member.def.name}${leader}`)
-      .setX(Math.max(x + PORTRAIT_SIZE / 2, 40))
+      .setText(`${p.member.def.name}${leader}`)
+      .setX(Math.max(p.frame.x + PORTRAIT_SIZE / 2, 40))
       .setVisible(true);
   }
 }
