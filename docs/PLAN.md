@@ -46,7 +46,8 @@ refining those tactics.
 | `src/systems/CombatManager.ts` | Starts fights on proximity, pulls in groups, ends fights |
 | `src/systems/CombatSystem.ts` | Runs tactics: picks rows, walks into range, performs actions, projectiles |
 | `src/world/` | Units (party members, enemies), party formation, placeholder test map + encounters |
-| `src/scenes/` | Phaser scenes: Boot (placeholder art), World (map + movement), UI (HUD/portraits) |
+| `src/scenes/` | Phaser scenes: Boot (placeholder art), World (map + movement), UI (HUD/portraits), Tactics (editor) |
+| `src/view.ts` | Full-window pixel camera (whole-number zoom), UI font and text style |
 | `docs/TACTICS.md` | Designer-facing list of tactics, planned and implemented |
 
 ## Party (first iteration)
@@ -93,10 +94,13 @@ More classes and characters can be found later in the game.
   HP numbers were roughly doubled so fights last long enough to watch (all placeholder).
   Defeat is a placeholder: the party respawns at the start at full HP and that fight resets.
 
-### M4 — Tactics editor
+### M4 — Tactics editor ✅ *(branch `feature/tactics-editor`)*
 - Per character: 10 rows of `Action | Target | Type` with dropdowns, an on/off toggle and reordering.
 - Only offers actions the character knows and types that fit the chosen target.
 - Can be opened at any time, including mid-fight; combat pauses while it is open.
+- *Notes:* **T** opens/closes (also Esc). One character per tab (click a tab, keys 1–5 or ←/→).
+  Click a cell to pick from a list; drag the dots to reorder; the box switches a row on/off; x removes it.
+  Edits apply to the live party immediately. Edited tactics are not saved between page reloads yet.
 
 ### M5 — Readability of combat
 - Highlight which row fired for each character (key for debugging your "program").
@@ -117,7 +121,8 @@ More classes and characters can be found later in the game.
 | Date | Decision |
 |---|---|
 | 2026-11-22 | Phaser 4 + TypeScript + Vite. 16px tiles. |
-| 2026-11-22 | Full-window canvas with whole-number pixel zoom (~360 world px tall); crisp UI text in Pixelify Sans. Replaces the fixed 480×270 canvas, which felt too pixelly. |
+| 2026-11-22 | Full-window canvas with whole-number pixel zoom (~360 world px tall); crisp UI text in the Jersey 10 pixel font. Replaces the fixed 480×270 canvas, which felt too pixelly. |
+| 2026-11-23 | Tactics editor opens with T; one character at a time; rows reorder by drag and drop. |
 | 2026-11-22 | Tactic rows are evaluated top to bottom; the first row that is on, off cooldown and has a valid target fires. |
 | 2026-11-22 | Every skill has a short cooldown. The basic Attack is paced by the weapon's attack interval. |
 | 2026-11-22 | The basic Attack depends on weapon type: **melee** for Yasmi, Hyne and Arthur; **ranged wand** for Oxleth and Telara. |

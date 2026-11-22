@@ -1,7 +1,7 @@
-import '@fontsource/pixelify-sans/400.css';
-import '@fontsource/pixelify-sans/700.css';
+import '@fontsource/jersey-10/400.css';
 import Phaser from 'phaser';
 import { BootScene } from './scenes/BootScene';
+import { TacticsScene } from './scenes/TacticsScene';
 import { UIScene } from './scenes/UIScene';
 import { WorldScene } from './scenes/WorldScene';
 
@@ -18,7 +18,7 @@ function start() {
       width: window.innerWidth,
       height: window.innerHeight,
     },
-    scene: [BootScene, WorldScene, UIScene],
+    scene: [BootScene, WorldScene, UIScene, TacticsScene],
   });
 
   // Dev builds only: expose the game for debugging in the browser console / automated tests.
@@ -26,6 +26,7 @@ function start() {
 }
 
 // Wait for the UI font so the first frame of text doesn't render in a fallback font.
-Promise.all([document.fonts.load('8px "Pixelify Sans"'), document.fonts.load('bold 8px "Pixelify Sans"')])
+document.fonts
+  .load('10px "Jersey 10"')
   .catch(() => undefined)
   .then(start);

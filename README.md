@@ -14,6 +14,14 @@ npm run build     # typecheck + production build into dist/
 npm run preview   # serve the production build
 ```
 
+## Controls
+
+| Input | Effect |
+|---|---|
+| Left click (map) | Move the party (outside combat) |
+| Click a portrait | Make that character the leader |
+| T | Open / close the tactics editor (pauses the game) |
+
 ## Debug keys (temporary)
 
 | Key | Effect |

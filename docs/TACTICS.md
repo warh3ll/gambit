@@ -26,7 +26,8 @@ whose action is ready (off cooldown), and that finds a valid target, is the one 
 - **Outside combat** tactics keep running, but only on allies already in range (e.g. Hyne healing someone
   standing next to her). Nobody walks off to do it. Cooldowns work the same as in a fight.
 
-Tactics can be edited at any time, **including in the middle of a fight** — combat pauses while the editor is open.
+Tactics can be edited at any time, **including in the middle of a fight** — press **T** to open the editor;
+combat pauses while it is open. Click a cell to change it, drag the dots to reorder, the box switches a row on/off.
 
 The implementation lives in [`src/data/tactics.ts`](../src/data/tactics.ts). This page is the
 design-side list — add ideas to the *Planned* sections and they'll get built.

@@ -1,8 +1,11 @@
 import Phaser from 'phaser';
 import { TARGET_VIEW_HEIGHT } from './config';
 
-/** Font used for all UI text (bundled via @fontsource, see main.ts). */
-export const FONT = '"Pixelify Sans", monospace';
+/**
+ * Font used for all UI text (bundled via @fontsource, see main.ts).
+ * Jersey 10 is drawn on a 10px grid: use sizes 10 or 20 (game pixels) to keep it crisp.
+ */
+export const FONT = '"Jersey 10", monospace';
 
 /** Whole-number pixel zoom for a screen of this height. */
 export const pixelZoom = (screenHeight: number) => Math.max(1, Math.round(screenHeight / TARGET_VIEW_HEIGHT));
@@ -55,6 +58,6 @@ export function sharpenText(scene: Phaser.Scene, resolution: number) {
 }
 
 /** Standard UI text style. Sizes are in game pixels. */
-export function textStyle(size = 8, color = '#ffffff', extra: Phaser.Types.GameObjects.Text.TextStyle = {}) {
+export function textStyle(size = 10, color = '#ffffff', extra: Phaser.Types.GameObjects.Text.TextStyle = {}) {
   return { fontFamily: FONT, fontSize: `${size}px`, color, ...extra } satisfies Phaser.Types.GameObjects.Text.TextStyle;
 }

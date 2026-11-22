@@ -54,6 +54,7 @@ export class WorldScene extends Phaser.Scene {
     // Debug keys (temporary).
     this.input.keyboard?.on('keydown-K', () => this.combat.debugDefeatEngaged());
     this.input.keyboard?.on('keydown-V', () => this.aggroDebug.setVisible(!this.aggroDebug.visible));
+    this.input.keyboard?.on('keydown-T', () => this.openTactics());
 
     this.scene.launch('UI', { party: this.party, combat: this.combat });
   }
@@ -71,6 +72,13 @@ export class WorldScene extends Phaser.Scene {
     const s = this.party.leader.sprite;
     this.leaderMarker.setPosition(s.x, s.y - s.height - 4);
     if (this.aggroDebug.visible) this.drawAggroRanges();
+  }
+
+  /** Opens the tactics editor; the world (and combat) pauses while it's open. */
+  private openTactics() {
+    this.scene.pause();
+    this.scene.pause('UI');
+    this.scene.launch('Tactics', { party: this.party });
   }
 
   private onCombatEnd(result: CombatResult, fought: Enemy[]) {

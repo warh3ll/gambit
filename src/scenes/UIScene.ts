@@ -50,10 +50,10 @@ export class UIScene extends Phaser.Scene {
       this.portraits.push(view);
     }
 
-    this.nameLabel = this.add.text(0, 0, '', textStyle(8)).setOrigin(0.5, 1).setVisible(false);
-    this.hint = this.add.text(0, 0, '[T] Tactics', textStyle(8, '#b8b0c8')).setOrigin(0, 1);
+    this.nameLabel = this.add.text(0, 0, '', textStyle(10)).setOrigin(0.5, 1).setVisible(false);
+    this.hint = this.add.text(0, 0, '[T] Tactics', textStyle(10, '#b8b0c8')).setOrigin(0, 1);
     this.banner = this.add
-      .text(0, 8, '', textStyle(12, '#ffffff', { fontStyle: 'bold', stroke: '#0d0b14', strokeThickness: 3 }))
+      .text(0, 8, '', textStyle(20, '#ffffff', { stroke: '#0d0b14', strokeThickness: 3 }))
       .setOrigin(0.5, 0)
       .setVisible(false);
 
