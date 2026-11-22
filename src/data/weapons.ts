@@ -32,6 +32,14 @@ export const WEAPONS = {
     interval: 1.6,
     projectile: true,
   },
+  bow: {
+    id: 'bow',
+    label: 'Bow',
+    range: 130,
+    power: 8,
+    interval: 1.8,
+    projectile: true,
+  },
 } satisfies Record<string, WeaponDef>;
 
 export type WeaponId = keyof typeof WEAPONS;

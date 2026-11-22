@@ -14,6 +14,13 @@ npm run build     # typecheck + production build into dist/
 npm run preview   # serve the production build
 ```
 
+## Debug keys (temporary)
+
+| Key | Effect |
+|---|---|
+| V | Show / hide enemy aggro ranges |
+| K | Defeat all enemies in the current fight (until real combat lands in M3) |
+
 ## Docs
 
 - [docs/PLAN.md](docs/PLAN.md) — milestones, decisions, open questions

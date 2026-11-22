@@ -41,8 +41,10 @@ refining those tactics.
 | `src/data/party.ts` | The party: stats, known actions, default tactics |
 | `src/systems/TacticEngine.ts` | Picks which tactic row fires (top to bottom, first match) |
 | `src/systems/Pathfinder.ts` | A* pathfinding on the tile grid + path smoothing |
-| `src/data/weapons.ts` | Weapon types (melee, wand) that define the basic Attack |
-| `src/world/` | Party, party members, formation, placeholder test map |
+| `src/data/weapons.ts` | Weapon types (melee, wand, bow) that define the basic Attack |
+| `src/data/enemies.ts` | Enemy types: stats, aggro radius, preset tactics |
+| `src/systems/CombatManager.ts` | Starts fights on proximity, pulls in groups, ends fights |
+| `src/world/` | Units (party members, enemies), party formation, placeholder test map + encounters |
 | `src/scenes/` | Phaser scenes: Boot (placeholder art), World (map + movement), UI (HUD/portraits) |
 | `docs/TACTICS.md` | Designer-facing list of tactics, planned and implemented |
 
@@ -74,10 +76,13 @@ More classes and characters can be found later in the game.
 - *Notes:* the party walks at its slowest member's speed; followers sprint to catch up when far behind.
   The map is generated in code for now; we switch to Tiled maps when building real slice content (M6).
 
-### M2 — Enemies & engagement
+### M2 — Enemies & engagement ✅ *(branch `feature/enemies-engagement`)*
 - Enemies placed in the world, with an aggro radius.
 - Entering the radius starts combat for that group; combat ends when one side is dead.
 - HP bars over everyone.
+- *Notes:* placeholder enemy types Wolf, Bandit and Bandit Archer, each with preset tactic rows.
+  HP bars show during combat (and whenever someone is hurt). The player can't move the party during a fight.
+  Until M3 nobody acts in combat — use the debug key **K** to win a fight, **V** to show aggro ranges.
 
 ### M3 — Combat driven by tactics
 - Each party member re-evaluates tactics on a short tick, moves into range, performs the action.
@@ -116,11 +121,14 @@ More classes and characters can be found later in the game.
 | 2026-11-22 | Combat pauses while the tactics editor is open. |
 | 2026-11-22 | Oxleth the Bane: buffs for allies, debilitating debuffs for enemies. More abilities to come. |
 | 2026-11-22 | "Any ally" includes the character itself; "Other ally" excludes it. |
+| 2026-11-22 | Fights start on proximity: when a party member gets within an enemy's aggro radius, that enemy's group joins. Any other group the party gets close to mid-fight joins too. |
+| 2026-11-22 | Each enemy type has preset tactic rows, built from the same Action/Target/Type pieces as the party. |
+| 2026-11-22 | No escaping fights for now: the party is locked in until one side is defeated. *(revisit later)* |
 
 ## Open questions for the designer
 
 1. **Progression** — are new Actions/Types unlocked over time (found, learned, bought), or all available from the start?
 2. **Defeat** — what happens when the party wipes? (Placeholder: retry the encounter.)
 3. **Art** — will you provide art, or should we start from a free placeholder pack?
-4. **Enemies** — should enemies use the same tactic system? (Recommended: yes — it lets us design enemies by writing rows.)
-5. **Slice setting** — where and when in the story does the vertical slice happen?
+4. **Slice setting** — where and when in the story does the vertical slice happen?
+5. **Escape** — should the party ever be able to flee a fight? *(parked for later)*

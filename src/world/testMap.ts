@@ -2,6 +2,8 @@
  * Placeholder map for M1 — built in code until we switch to Tiled maps.
  * Tile ids index into the generated 'tiles' tileset (see BootScene).
  */
+import type { EnemyTypeId } from '../data/enemies';
+
 export const Tile = {
   Grass: 0,
   Flowers: 1,
@@ -21,6 +23,35 @@ export const MAP_HEIGHT = 40;
 
 /** Tile the party starts on. */
 export const SPAWN = { x: 8, y: 20 };
+
+/** Enemy groups placed on the test map (tile coordinates). */
+export interface EncounterDef {
+  id: string;
+  enemies: { type: EnemyTypeId; x: number; y: number }[];
+}
+
+export const ENCOUNTERS: EncounterDef[] = [
+  {
+    id: 'wolves',
+    enemies: [
+      { type: 'wolf', x: 26, y: 23 },
+      { type: 'wolf', x: 28, y: 22 },
+      { type: 'wolf', x: 27, y: 25 },
+    ],
+  },
+  {
+    id: 'bandits-gap',
+    enemies: [
+      { type: 'bandit', x: 40, y: 19 },
+      { type: 'bandit', x: 40, y: 22 },
+      { type: 'banditArcher', x: 44, y: 20 },
+    ],
+  },
+  {
+    id: 'lone-bandit',
+    enemies: [{ type: 'bandit', x: 48, y: 6 }],
+  },
+];
 
 /** Small deterministic RNG so the map is the same every run. */
 function rng(seed: number) {

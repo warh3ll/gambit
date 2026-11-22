@@ -1,14 +1,20 @@
 import Phaser from 'phaser';
 import { TILE_SIZE } from '../config';
+import { ENEMIES } from '../data/enemies';
+import { CombatManager } from '../systems/CombatManager';
 import { Pathfinder } from '../systems/Pathfinder';
+import { Enemy } from '../world/Enemy';
 import { Party } from '../world/Party';
-import { MAP_HEIGHT, MAP_WIDTH, SPAWN, buildTestMap, isBlocking } from '../world/testMap';
+import { ENCOUNTERS, MAP_HEIGHT, MAP_WIDTH, SPAWN, buildTestMap, isBlocking } from '../world/testMap';
 import type { UIScene } from './UIScene';
 
-/** The explorable world: map, party movement and camera. */
+/** The explorable world: map, party movement, enemies and camera. */
 export class WorldScene extends Phaser.Scene {
   party!: Party;
+  combat!: CombatManager;
+  private enemies: Enemy[] = [];
   private leaderMarker!: Phaser.GameObjects.Image;
+  private aggroDebug!: Phaser.GameObjects.Graphics;
 
   constructor() {
     super('World');
@@ -24,8 +30,11 @@ export class WorldScene extends Phaser.Scene {
     const pathfinder = new Pathfinder(MAP_WIDTH, MAP_HEIGHT, TILE_SIZE, (tx, ty) => !isBlocking(data[ty][tx]));
     const spawn = pathfinder.tileCenter(SPAWN.x, SPAWN.y);
     this.party = new Party(this, pathfinder, spawn);
+    this.enemies = this.spawnEncounters(pathfinder);
+    this.combat = new CombatManager(this.party, this.enemies);
 
     this.leaderMarker = this.add.image(0, 0, 'leader-marker').setDepth(10_000);
+    this.aggroDebug = this.add.graphics().setDepth(2).setVisible(false);
 
     const cam = this.cameras.main;
     cam.setBounds(0, 0, MAP_WIDTH * TILE_SIZE, MAP_HEIGHT * TILE_SIZE);
@@ -35,20 +44,44 @@ export class WorldScene extends Phaser.Scene {
     this.input.mouse?.disableContextMenu();
     this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.onClick(pointer));
 
-    this.scene.launch('UI', { party: this.party });
+    // Debug keys (temporary).
+    this.input.keyboard?.on('keydown-K', () => this.combat.debugDefeatEngaged());
+    this.input.keyboard?.on('keydown-V', () => this.aggroDebug.setVisible(!this.aggroDebug.visible));
+
+    this.scene.launch('UI', { party: this.party, combat: this.combat });
   }
 
   update(_time: number, deltaMs: number) {
     const dt = Math.min(deltaMs / 1000, 0.1); // clamp so a hitch doesn't teleport anyone
     this.party.update(dt);
+    for (const e of this.enemies) e.update(dt, e.def.speed);
+    this.combat.update();
+
     const s = this.party.leader.sprite;
     this.leaderMarker.setPosition(s.x, s.y - s.height - 4);
+    if (this.aggroDebug.visible) this.drawAggroRanges();
+  }
+
+  private spawnEncounters(pathfinder: Pathfinder): Enemy[] {
+    const out: Enemy[] = [];
+    for (const group of ENCOUNTERS) {
+      group.enemies.forEach((spec, i) => {
+        const tile = pathfinder.nearestWalkableTile(spec.x, spec.y);
+        if (!tile) throw new Error(`no walkable tile near enemy ${group.id}#${i}`);
+        const p = pathfinder.tileCenter(tile.x, tile.y);
+        const enemy = new Enemy(this, ENEMIES[spec.type], `${group.id}-${i}`, group.id, p.x, p.y);
+        enemy.facing = Math.PI; // face west, towards where the party comes from
+        out.push(enemy);
+      });
+    }
+    return out;
   }
 
   private onClick(pointer: Phaser.Input.Pointer) {
     if (!pointer.leftButtonDown()) return;
     const ui = this.scene.get('UI') as UIScene;
     if (ui.isOverUI(pointer.x, pointer.y)) return;
+    if (this.combat.inCombat) return; // the party follows its tactics in a fight
 
     // Convert via this scene's camera explicitly (worldX may come from the UI scene's camera).
     const world = pointer.positionToCamera(this.cameras.main) as Phaser.Math.Vector2;
@@ -66,5 +99,14 @@ export class WorldScene extends Phaser.Scene {
       ease: 'Quad.easeIn',
       onComplete: () => ring.destroy(),
     });
+  }
+
+  private drawAggroRanges() {
+    const g = this.aggroDebug.clear();
+    for (const e of this.enemies) {
+      if (!e.alive) continue;
+      const engaged = this.combat.engaged.has(e);
+      g.lineStyle(1, engaged ? 0xff5a5a : 0xffd966, 0.6).strokeCircle(e.x, e.y, e.def.aggroRadius);
+    }
   }
 }

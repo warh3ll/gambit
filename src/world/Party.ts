@@ -33,6 +33,8 @@ export class Party extends Phaser.Events.EventEmitter {
   /** Smoothed leader facing, so the formation doesn't snap around on every turn. */
   private formationAngle = Math.PI / 2;
   private followTimer = 0;
+  /** In combat the player can't move the party; tactics take over (M3). */
+  private inCombat = false;
 
   constructor(scene: Phaser.Scene, pathfinder: Pathfinder, spawn: Point) {
     super();
@@ -67,8 +69,24 @@ export class Party extends Phaser.Events.EventEmitter {
     this.emit('leaderChanged', next);
   }
 
+  enterCombat() {
+    this.inCombat = true;
+    for (const m of this.members) {
+      m.stop();
+      m.showHpBar = true;
+    }
+  }
+
+  exitCombat() {
+    this.inCombat = false;
+    for (const m of this.members) m.showHpBar = false;
+    this.formationAngle = this.leader.facing;
+    this.followTimer = FOLLOW_INTERVAL; // regroup right away
+  }
+
   /** Sends the leader towards `target`. Returns the actual destination, or null if unreachable. */
   moveTo(target: Point): Point | null {
+    if (this.inCombat) return null;
     const path = this.pathfinder.findPath(this.leader, target);
     if (!path || !path.length) return null;
     this.leader.setPath(path);
@@ -76,6 +94,10 @@ export class Party extends Phaser.Events.EventEmitter {
   }
 
   update(dt: number) {
+    if (this.inCombat) {
+      for (const m of this.members) m.update(dt, 0); // combat movement arrives with tactics (M3)
+      return;
+    }
     this.leader.update(dt, this.speed);
     this.formationAngle = lerpAngle(this.formationAngle, this.leader.facing, Math.min(1, dt * 4));
 

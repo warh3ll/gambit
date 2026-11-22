@@ -58,6 +58,7 @@ Everyone has **Attack**. What it does depends on the character's weapon type
 |---|---|---|---|---|
 | Melee | Yasmi, Hyne, Arthur | 20 | 10 | 1.2s |
 | Wand (ranged bolt) | Oxleth, Telara | 110 | 7 | 1.6s |
+| Bow (ranged) | Enemies only, for now | 130 | 8 | 1.8s |
 
 ### Skills
 
@@ -77,6 +78,18 @@ Oxleth the Bane is the support: **buffs** for allies, **debilitating debuffs** f
 
 ### Planned / ideas
 - *(add here)*
+
+## Enemy tactics
+
+Each enemy type has preset rows, using the same pieces. From an enemy's point of view,
+"Enemy" means the player's party. Defined in [`src/data/enemies.ts`](../src/data/enemies.ts).
+
+| Enemy | Weapon | # | Action | Target | Type |
+|---|---|---|---|---|---|
+| Wolf | Melee | 1 | Attack | Enemy | Lowest HP |
+| Bandit | Melee | 1 | Attack | Enemy | Any |
+| Bandit Archer | Bow | 1 | Attack | Enemy | HP below 50% |
+| | | 2 | Attack | Enemy | Any |
 
 ## Default tactics
 

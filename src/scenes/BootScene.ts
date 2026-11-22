@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { TILE_SIZE } from '../config';
+import { ENEMIES } from '../data/enemies';
 import { PARTY } from '../data/party';
 import { TILE_COUNT, Tile } from '../world/testMap';
 
@@ -25,6 +26,16 @@ export class BootScene extends Phaser.Scene {
       g.fillStyle(c.color).fillRect(1, 1, 10, 14);
       g.fillStyle(ink).fillRect(3, 4, 2, 2).fillRect(7, 4, 2, 2);
       g.generateTexture(`char-${c.id}`, 12, 16);
+    }
+
+    // Enemies: coloured body with red eyes, sized per type.
+    for (const e of Object.values(ENEMIES)) {
+      const { w, h } = e.size;
+      g.clear();
+      g.fillStyle(ink).fillRect(0, 0, w, h);
+      g.fillStyle(e.color).fillRect(1, 1, w - 2, h - 2);
+      g.fillStyle(0xff3b3b).fillRect(w - 5, 3, 2, 2).fillRect(w - 9, 3, 2, 2);
+      g.generateTexture(`enemy-${e.id}`, w, h);
     }
 
     // Portraits: face crop of the same placeholder.
