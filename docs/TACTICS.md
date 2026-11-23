@@ -102,7 +102,8 @@ Status effects:
 All actions work in combat as of M3.
 
 ### Planned / ideas
-- *(add here)*
+- **Use &lt;consumable&gt;** (M15): one Action for each consumable, e.g. `Use Health Potion | Any ally | HP below 25%`.
+  It uses one from the party's bag, and the row is skipped while that stack is empty.
 
 ## Enemy tactics
 

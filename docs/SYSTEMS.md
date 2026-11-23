@@ -228,25 +228,44 @@ leave it, but can sit in the reserve like anyone else. Events can still have the
 
 **Proposal**
 - One **shared party inventory** (bag) with two kinds of item:
-  - **Equipment**, worn by a character. Each character has slots, e.g. **Weapon**, **Armour** and **Trinket**.
-    - A weapon keeps the character's weapon type: Arthur always uses melee weapons, Telara always uses wands.
+  - **Equipment**, worn by a character. Slots: **Weapon**, **Armour**, and **Shield** for shield users (see Q22).
+    - A weapon keeps the character's weapon type: everyone of the same type shares one pool of weapons.
       A better weapon changes the numbers (damage, speed, maybe range) and can add an effect.
-    - Armour and trinkets give stats (HP, damage taken) or small passives.
-  - **Consumables**, used up: potions, antidotes, scrolls. Stackable.
-- **Using consumables:** out of combat, from the inventory screen. In combat, the player isn't involved, so…
-  - …proposal: consumables become tactic **Actions**, e.g. `Use Potion | Any ally | HP below 25%`.
-    The row only fires while the bag has one. This keeps the "you program, you don't play" idea.
+    - Armour and shields give stats (HP, damage taken) or small passives.
+  - **Consumables**, used up: potions, antidotes, scrolls. One stack each, max 20.
+- **Using consumables:** out of combat, from the inventory screen. In combat, through tactic **Actions**, e.g.
+  `Use Health Potion | Any ally | HP below 25%`. This keeps the "you program, you don't play" idea.
 - **Gold** for buying and selling in shops.
-- Items come from quest rewards, shops, chests in the world, and maybe enemy drops.
+- Items come from quest rewards, shops and chests in the world. Enemies drop gold and consumables.
 - Inventory screen (key **I**): bag list, equipment per character, compare stats when choosing.
 - Items are data in `src/data/items.ts`: id, name, kind, slot, stats/effect, price, icon.
 
 **Questions**
 22. Equipment **slots**: Weapon + Armour + Trinket, or something else?
+    > **Answer:** **Weapon**, **Armour**, and **Shield** (only for characters who use shields). More slots may come as
+    > classes and characters are worked out.
+    > - Weapons come in **pools per type**: everyone with the same type shares a pool. For example, all healers use the
+    >   same healer weapons, and all ranged damage characters share theirs.
+    > - **Wands** are the weapon pool for ranged magic damage.
 23. Can consumables be used **in combat via tactics** (`Use Potion | …`), or only outside fights?
+    > **Answer:** **Yes, in combat**, through their own tactic rows, e.g. `Use Health Potion | Any ally | HP below 25%`.
 24. **Gold**: yes or no? Can items be **sold**?
+    > **Answer:** **Gold, yes.** Enemies sometimes drop it, and quests and side quests give it as rewards.
+    > Items can be **sold in shops**.
 25. **Enemy drops**: do enemies drop items/gold, or do items only come from quests, shops and chests?
+    > **Answer:** Enemies can drop **gold and consumables**. Equipment doesn't drop from enemies.
 26. Inventory **limit** (slots/weight), or unlimited?
+    > **Answer:** **Unlimited** (no inventory management). But there's only **one stack per consumable**, and a stack
+    > holds at most **20**.
+
+**What this means for the build (M15)**
+- Each character has a **weapon type**, and only weapons of that type fit them. Weapon types and slots are data, so
+  new ones can be added as classes are worked out.
+- Each character has a `shield: true/false`, which decides whether they have the Shield slot.
+- `Use <consumable>` becomes a tactic **Action** for each consumable. The row is skipped while that consumable's stack
+  is empty.
+- Each enemy type has a **loot table**: a gold range and a chance for each consumable. Loot is shown after the fight.
+- When a stack is full at 20, extra copies of that consumable aren't picked up. The loot text says so.
 
 ---
 
