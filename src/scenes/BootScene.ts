@@ -5,8 +5,8 @@ import { NPCS } from '../data/npcs';
 import { PARTY } from '../data/party';
 import { SPEAKERS } from '../data/story';
 import { ART_FILES } from '../data/art';
-import { HEADSHOT_SIZE, type Painter, paintHeadshot, paintNpc } from '../world/placeholderArt';
-import { TILE_COUNT, Tile } from '../world/tiles';
+import { HEADSHOT_SIZE, type Painter, paintCharacter, paintEnemy, paintHeadshot, paintNpc, paintTiles } from '../world/placeholderArt';
+import { TILE_COUNT } from '../world/tiles';
 
 export const PORTRAIT_SIZE = 22;
 
@@ -35,9 +35,7 @@ export class BootScene extends Phaser.Scene {
     // Characters: coloured body with outline and eyes.
     for (const c of PARTY) {
       g.clear();
-      g.fillStyle(ink).fillRect(0, 0, 12, 16);
-      g.fillStyle(c.color).fillRect(1, 1, 10, 14);
-      g.fillStyle(ink).fillRect(3, 4, 2, 2).fillRect(7, 4, 2, 2);
+      paintCharacter(paint, c.color);
       make(`char-${c.id}`, 12, 16);
     }
 
@@ -45,9 +43,7 @@ export class BootScene extends Phaser.Scene {
     for (const e of Object.values(ENEMIES)) {
       const { w, h } = e.size;
       g.clear();
-      g.fillStyle(ink).fillRect(0, 0, w, h);
-      g.fillStyle(e.color).fillRect(1, 1, w - 2, h - 2);
-      g.fillStyle(0xff3b3b).fillRect(w - 5, 3, 2, 2).fillRect(w - 9, 3, 2, 2);
+      paintEnemy(paint, e.color, w, h);
       make(`enemy-${e.id}`, w, h);
     }
 
@@ -143,101 +139,11 @@ export class BootScene extends Phaser.Scene {
 
   /** Draws all map tiles side by side into one 'tiles' texture. */
   private makeTileset(g: Phaser.GameObjects.Graphics) {
-    const T = TILE_SIZE;
     g.clear();
-    const grass = (ox: number) => {
-      g.fillStyle(0x355435).fillRect(ox, 0, T, T);
-      g.fillStyle(0x3d5f3b).fillRect(ox + 3, 4, 1, 1).fillRect(ox + 11, 9, 1, 1).fillRect(ox + 6, 13, 1, 1);
-    };
-    const forestFloor = (ox: number) => {
-      g.fillStyle(0x283d2c).fillRect(ox, 0, T, T);
-      g.fillStyle(0x31482f).fillRect(ox + 2, 3, 1, 1).fillRect(ox + 12, 7, 1, 1).fillRect(ox + 7, 12, 2, 1);
-    };
-    const water = (ox: number) => {
-      g.fillStyle(0x2b4f7a).fillRect(ox, 0, T, T);
-      g.fillStyle(0x3d6a9a).fillRect(ox + 2, 5, 5, 1).fillRect(ox + 9, 11, 4, 1);
-    };
-    for (let i = 0; i < TILE_COUNT; i++) {
-      const ox = i * T;
-      switch (i) {
-        case Tile.Grass:
-          grass(ox);
-          break;
-        case Tile.Flowers:
-          grass(ox);
-          g.fillStyle(0xe8d36b).fillRect(ox + 4, 5, 2, 2);
-          g.fillStyle(0xd96b8a).fillRect(ox + 10, 10, 2, 2);
-          break;
-        case Tile.Tree:
-          grass(ox);
-          g.fillStyle(0x4a3424).fillRect(ox + 7, 10, 2, 5);
-          g.fillStyle(0x1e3a1e).fillCircle(ox + 8, 7, 7);
-          g.fillStyle(0x2b4f28).fillCircle(ox + 7, 6, 5);
-          break;
-        case Tile.Rock:
-          g.fillStyle(0x4b4b55).fillRect(ox, 0, T, T);
-          g.fillStyle(0x6a6a76).fillRect(ox + 1, 1, T - 3, T - 4);
-          g.fillStyle(0x82828e).fillRect(ox + 3, 3, 5, 3);
-          break;
-        case Tile.Water:
-          water(ox);
-          break;
-        case Tile.Path:
-          g.fillStyle(0x7a6544).fillRect(ox, 0, T, T);
-          g.fillStyle(0x6b573a).fillRect(ox + 4, 3, 2, 1).fillRect(ox + 10, 10, 2, 1);
-          break;
-        case Tile.ForestFloor:
-          forestFloor(ox);
-          break;
-        case Tile.ForestTree:
-          forestFloor(ox);
-          g.fillStyle(0x3a2a1c).fillRect(ox + 7, 11, 2, 5);
-          g.fillStyle(0x142a18).fillCircle(ox + 8, 7, 8);
-          g.fillStyle(0x1e3a22).fillCircle(ox + 7, 6, 5);
-          break;
-        case Tile.House:
-          // Roof seen from above: tiles in rows, dark eaves.
-          g.fillStyle(0x5a2e26).fillRect(ox, 0, T, T);
-          g.fillStyle(0x7a3e30);
-          for (let r = 0; r < 4; r++) g.fillRect(ox, r * 4, T, 3);
-          g.fillStyle(0x3a1e1a).fillRect(ox, T - 1, T, 1);
-          break;
-        case Tile.Fence:
-          grass(ox);
-          g.fillStyle(0x6b5232).fillRect(ox, 6, T, 2).fillRect(ox, 11, T, 2);
-          g.fillStyle(0x4a3822).fillRect(ox + 2, 4, 2, 10).fillRect(ox + 11, 4, 2, 10);
-          break;
-        case Tile.Floor:
-          g.fillStyle(0x6b5038).fillRect(ox, 0, T, T);
-          g.fillStyle(0x5a4230);
-          for (let r = 0; r < 4; r++) g.fillRect(ox, r * 4 + 3, T, 1);
-          g.fillRect(ox + 5, 0, 1, 4).fillRect(ox + 11, 4, 1, 4).fillRect(ox + 3, 8, 1, 4).fillRect(ox + 9, 12, 1, 4);
-          break;
-        case Tile.Wall:
-          g.fillStyle(0x3a3046).fillRect(ox, 0, T, T);
-          g.fillStyle(0x4a3e58).fillRect(ox, 0, T, 10);
-          g.fillStyle(0x2a2234).fillRect(ox, 10, T, 1).fillRect(ox + 7, 0, 1, 10);
-          break;
-        case Tile.Furniture:
-          g.fillStyle(0x6b5038).fillRect(ox, 0, T, T);
-          g.fillStyle(0x3a2a1c).fillRect(ox + 1, 2, T - 2, T - 3);
-          g.fillStyle(0x8a6a44).fillRect(ox + 2, 3, T - 4, T - 6);
-          break;
-        case Tile.Door:
-          g.fillStyle(0x3a1e1a).fillRect(ox, 0, T, T);
-          g.fillStyle(0x7a5232).fillRect(ox + 2, 1, T - 4, T - 1);
-          g.fillStyle(0x5a3a22).fillRect(ox + 7, 1, 2, T - 1);
-          g.fillStyle(0xd9b45a).fillRect(ox + 10, 8, 2, 2);
-          break;
-        case Tile.Bridge:
-          water(ox);
-          g.fillStyle(0x8a6a44).fillRect(ox, 1, T, T - 2);
-          g.fillStyle(0x6b5232);
-          for (let c = 0; c < 4; c++) g.fillRect(ox + c * 4 + 3, 1, 1, T - 2);
-          g.fillStyle(0x4a3822).fillRect(ox, 0, T, 1).fillRect(ox, T - 1, T, 1);
-          break;
-      }
-    }
-    if (!this.textures.exists('tiles')) g.generateTexture('tiles', T * TILE_COUNT, T);
+    paintTiles(
+      (color, alpha, x, y, w, h) => g.fillStyle(color, alpha).fillRect(x, y, w, h),
+      (color, x, y, r) => g.fillStyle(color).fillCircle(x, y, r),
+    );
+    if (!this.textures.exists('tiles')) g.generateTexture('tiles', TILE_SIZE * TILE_COUNT, TILE_SIZE);
   }
 }

@@ -35,7 +35,7 @@ All of them share one foundation: a **game state** that is saved and loaded. Tha
 ## 1. World: areas and travel — ✅ built in M10 (shops, inns, recruiting come with §7)
 
 **Proposal**
-- The world is split into **areas**. Each area is a map (the ASCII grid format we already use) plus a data file listing:
+- The world is split into **areas**. Each area is a map (since E2: painted in the Gambit Editor, one JSON file per area) listing:
   - its exits;
   - its encounters;
   - its NPCs;

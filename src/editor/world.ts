@@ -1,17 +1,17 @@
 /**
- * What the editor knows about the rest of the game, read straight from the game's own data files:
- * the party, and every area's start points, enemy groups, story triggers and NPC placements.
- * (Areas are still edited in src/data/areas/ until the map painter exists, so this is read-only here.)
+ * What the editor knows about the world: the party (from the game's own data), and every area's start points,
+ * enemy groups, story triggers and NPC placements, read from the areas being edited (so unsaved map changes count).
  */
-import { AREAS, START_AREA } from '../data/areas';
-import type { AreaDef } from '../data/areas/types';
+import type { AreaFile } from '../data/areas/types';
+import { ENEMIES } from '../data/enemies';
 import { PARTY } from '../data/party';
-import { loadMap } from '../world/mapLoader';
+import { groupEnemies, loadMap } from '../world/mapLoader';
+import { type Content, getState } from './store';
 
 export interface AreaInfo {
   id: string;
   name: string;
-  kind: AreaDef['kind'];
+  kind: AreaFile['kind'];
   /** Named arrival points ('default' = new game / fallback). */
   starts: string[];
   /** Enemy groups that have a name (only those can be started by an event). */
@@ -25,27 +25,47 @@ export interface AreaInfo {
   error?: string;
 }
 
-function readArea(def: AreaDef): AreaInfo {
-  const base: AreaInfo = { id: def.id, name: def.name, kind: def.kind, starts: [], groups: [], triggers: [], npcs: [], onEnter: def.onEnter };
+function readArea(id: string, file: AreaFile): AreaInfo {
+  const base: AreaInfo = { id, name: file.name, kind: file.kind, starts: [], groups: [], triggers: [], npcs: [], onEnter: file.onEnter };
   try {
-    const map = loadMap(def);
-    const named = new Set(Object.values(def.legend ?? {}).flatMap((m) => ('enemy' in m && m.group ? [m.group] : [])));
+    loadMap({ ...file, id });
+    const named = groupEnemies(file.enemies.filter((e) => e.type in ENEMIES)).filter((g) => g.enemies.some((e) => e.group));
     return {
       ...base,
-      starts: [...map.starts.keys()],
-      groups: map.encounters.filter((g) => named.has(g.id)).map((g) => ({ id: g.id, unique: g.unique ?? false, onWin: g.onWin })),
-      triggers: [...new Set(map.triggers.values())],
-      npcs: [...new Set(map.npcs.map((n) => n.id))],
+      starts: Object.keys(file.starts),
+      groups: named.map((g) => ({ id: g.id, unique: !!file.encounters[g.id]?.unique, onWin: file.encounters[g.id]?.onWin })),
+      triggers: [...new Set(file.triggers.map((t) => t.event))],
+      npcs: [...new Set(file.npcs.map((n) => n.id))],
     };
   } catch (err) {
     return { ...base, error: err instanceof Error ? err.message : String(err) };
   }
 }
 
+const cache = new WeakMap<Content['areas'], AreaInfo[]>();
+
+/** Facts about every area in `c`. */
+export function areasOf(c: Content): AreaInfo[] {
+  let out = cache.get(c.areas);
+  if (!out) {
+    out = Object.entries(c.areas).map(([id, a]) => readArea(id, a));
+    cache.set(c.areas, out);
+  }
+  return out;
+}
+
+const party = PARTY.map((c) => ({ id: c.id, name: c.name, color: c.color }));
+
+/** The world as currently edited. */
 export const WORLD = {
-  areas: Object.values(AREAS).map(readArea),
-  startArea: START_AREA,
-  party: PARTY.map((c) => ({ id: c.id, name: c.name, color: c.color })),
+  get areas() {
+    return areasOf(getState().content);
+  },
+  /** Where a new game starts. */
+  get startArea() {
+    return getState().content.story.newGame.area;
+  },
+  party,
 };
 
 export const areaById = (id: string) => WORLD.areas.find((a) => a.id === id);

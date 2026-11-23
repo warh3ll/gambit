@@ -8,10 +8,11 @@ import { render } from 'preact';
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { useGame } from './gameLink';
 import { type Tab, getNav, go, selectStep, useNav } from './nav';
+import { MapSide, MapSidebar } from './map/MapPanels';
 import { Page, Sidebar } from './pages';
 import { Preview, SidePanel, type TestResult, testInGame } from './side';
 import {
-  FILE_NAMES,
+  fileName,
   discardDraft,
   dirtyFiles,
   editSteps,
@@ -35,6 +36,9 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'map', label: 'Map' },
 ];
 
+/** The area last open on the Map tab, to return to it. */
+let lastArea: string | null = null;
+
 function App() {
   const state = useStore();
   const nav = useNav();
@@ -46,6 +50,7 @@ function App() {
   const errors = problems.filter((p) => p.level === 'error').length;
 
   useEffect(() => setTest(null), [nav.tab, nav.id]);
+  if (nav.tab === 'map' && nav.id && state.content.areas[nav.id]) lastArea = nav.id;
 
   // Keyboard: Ctrl+S save, Ctrl+Z / Ctrl+Y (or Ctrl+Shift+Z) undo / redo, Delete removes the selected step.
   useEffect(() => {
@@ -97,7 +102,7 @@ function App() {
         </div>
         <nav class="tabs">
           {TABS.map((t) => (
-            <button key={t.id} class={`tab ${nav.tab === t.id ? 'active' : ''}`} onClick={() => go(t.id)}>
+            <button key={t.id} class={`tab ${nav.tab === t.id ? 'active' : ''}`} onClick={() => (t.id === 'map' ? go('map', lastArea ?? state.content.story.newGame.area) : go(t.id))}>
               {t.label}
             </button>
           ))}
@@ -115,7 +120,7 @@ function App() {
             ↷
           </button>
         </div>
-        <span class="save-state" title={dirty.map((k) => FILE_NAMES[k]).join('\n')}>
+        <span class="save-state" title={dirty.map(fileName).join('\n')}>
           {dirty.length ? 'Unsaved changes' : ''}
         </span>
         <button
@@ -132,6 +137,7 @@ function App() {
 
       <div class="body">
         {(nav.tab === 'events' || nav.tab === 'npcs') && <Sidebar key={nav.tab} problems={problems} />}
+        {nav.tab === 'map' && <MapSidebar problems={problems} />}
         <main
           class="main"
           onClick={(e) => {
@@ -142,7 +148,7 @@ function App() {
           <Page onTest={async () => setTest(await testInGame())} />
           <Preview />
         </main>
-        <SidePanel problems={problems} test={test} setTest={setTest} />
+        {nav.tab === 'map' ? <MapSide problems={problems} /> : <SidePanel problems={problems} test={test} setTest={setTest} />}
       </div>
 
       <datalist id="flag-names">

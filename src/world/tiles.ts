@@ -38,7 +38,7 @@ const BLOCKING = new Set<number>([
 ]);
 export const isBlocking = (tile: number) => BLOCKING.has(tile);
 
-/** Characters used in the ASCII map files (src/data/maps/). */
+/** The character for each tile in an area file's `tiles` rows (src/data/areas/*.json). */
 export const TILE_CHARS: Record<string, TileId> = {
   '.': Tile.Grass,
   ',': Tile.Flowers,
@@ -54,4 +54,8 @@ export const TILE_CHARS: Record<string, TileId> = {
   _: Tile.Floor,
   W: Tile.Wall,
   O: Tile.Furniture,
+  D: Tile.Door,
 };
+
+/** The map character of each tile id. */
+export const CHAR_OF_TILE: Record<number, string> = Object.fromEntries(Object.entries(TILE_CHARS).map(([ch, id]) => [id, ch]));

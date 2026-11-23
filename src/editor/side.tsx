@@ -8,6 +8,7 @@ import { flagValueText, speakers } from './steps';
 import { type Owner, commit, getState, listAt, rootSteps, useStore, walkSteps } from './store';
 import { Card, SpeakerFace } from './ui';
 import type { Problem } from './validate';
+import { setUi } from './map/state';
 import { areaById } from './world';
 
 /** The step list open on the page, if any. */
@@ -152,9 +153,15 @@ function FlagValueToggle({ value, onChange }: { value: FlagValue; onChange: (v: 
   return <span class="pill static">{flagValueText(value)}</span>;
 }
 
-function ProblemsCard({ problems }: { problems: Problem[] }) {
+export function ProblemsCard({ problems }: { problems: Problem[] }) {
   const errors = problems.filter((p) => p.level === 'error').length;
   const open = (p: Problem) => {
+    if (p.area) {
+      go('map', p.area);
+      if (p.thing) setUi({ selection: p.thing, tool: 'select' });
+      if (p.at) setUi({ focus: p.at });
+      return;
+    }
     if (!p.owner) return;
     const step: SelectedStep | null = p.step ? { owner: p.owner, path: p.step.path, index: p.step.index } : null;
     goOwner(p.owner, step);
@@ -168,7 +175,7 @@ function ProblemsCard({ problems }: { problems: Problem[] }) {
       {!problems.length && <p class="muted small">Nothing found. Every speaker, flag, fight and area checks out.</p>}
       <ul class="problem-list">
         {problems.map((p, i) => (
-          <li key={i} class={`problem ${p.level} ${p.owner ? 'link' : ''}`} onClick={() => open(p)}>
+          <li key={i} class={`problem ${p.level} ${p.owner || p.area ? 'link' : ''}`} onClick={() => open(p)}>
             <span class="problem-icon">{p.level === 'error' ? '●' : '▲'}</span>
             <span>
               {p.text}

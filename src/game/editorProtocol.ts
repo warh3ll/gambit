@@ -9,7 +9,9 @@ export type ToGame =
   | { type: 'ping' }
   | { type: 'play'; game: string; request: number; steps: Step[] }
   | { type: 'setFlag'; game: string; flag: string; value: FlagValue }
-  | { type: 'clearFlag'; game: string; flag: string };
+  | { type: 'clearFlag'; game: string; flag: string }
+  /** "Play from here": put the party on a tile of an area. */
+  | { type: 'goto'; game: string; request: number; area: string; x: number; y: number };
 
 /** Game → editor. */
 export type FromGame =

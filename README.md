@@ -37,9 +37,10 @@ The game autosaves (one save, in the browser). The title screen offers *Continue
 
 ## Editing content
 
-- Story events: [src/data/story.ts](src/data/story.ts) — steps explained in [src/game/script.ts](src/game/script.ts)
-- Areas (maps): [src/data/areas/](src/data/areas/) — one file per area, ASCII map + legend; list new ones in `index.ts`
-- NPCs: [src/data/npcs.ts](src/data/npcs.ts)
+- Run `npm run dev` and open the **Gambit Editor** at http://localhost:8080/editor.html for story events,
+  NPCs and maps (areas). It saves into [src/data/story.json](src/data/story.json),
+  [src/data/npcs.json](src/data/npcs.json) and [src/data/areas/](src/data/areas/) (one file per area).
+- Event steps are explained in [src/game/script.ts](src/game/script.ts)
 - Enemies: [src/data/enemies.ts](src/data/enemies.ts) · Party: [src/data/party.ts](src/data/party.ts)
 - Real art: drop PNGs in `public/art/` and list them in [src/data/art.ts](src/data/art.ts)
 

@@ -4,7 +4,7 @@
  * The content lives in npcs.json, next to this file. Edit it with the Gambit Editor:
  * run `npm run dev` and open http://localhost:8080/editor.html (NPCs tab).
  *
- * Place an NPC on a map with a marker in the area's legend: e.g. `m: { npc: 'marta' }`.
+ * Place an NPC on a map with the editor's NPC tool (Map tab); the area file lists them under `npcs`.
  * Their conversation (`talk`) is an event that plays each time you talk to them.
  */
 import type { Step } from '../game/script';

@@ -16,10 +16,13 @@
   (~360 game px tall). Lay out UI in game pixels from the view size, never fixed screen sizes. 16px tiles.
 - All tactic building blocks (Actions, Targets, Types) live in `src/data/tactics.ts`.
   Keep `docs/TACTICS.md` in sync when adding or changing one.
-- Designer-editable content: story events in `src/data/story.json` and NPCs in `src/data/npcs.json`, both made with
-  the Gambit Editor (http://localhost:8080/editor.html; code in `src/editor/`, saving via `tools/editorPlugin.ts`).
-  Areas (ASCII map + legend) in `src/data/areas/`, real art overrides in `src/data/art.ts`. Keep these readable for a
-  non-programmer. The editor lays the JSON out one step per line; keep that layout when editing it by hand.
+- Designer-editable content: story events in `src/data/story.json`, NPCs in `src/data/npcs.json` and areas in
+  `src/data/areas/<id>.json`, all made with the Gambit Editor (http://localhost:8080/editor.html; code in
+  `src/editor/`, the map painter in `src/editor/map/`, saving via `tools/editorPlugin.ts`). Real art overrides in
+  `src/data/art.ts`. Keep these readable for a non-programmer. The editor lays the JSON out one step per line; keep
+  that layout when editing it by hand.
+- Adding a map tile: `Tile` and `TILE_CHARS` in `src/world/tiles.ts` (its map character), and its placeholder in
+  `paintTiles` (`src/world/placeholderArt.ts`, shared by the game and the editor).
 - Adding or changing an event step type: `Step` in `src/game/script.ts`, `EventRunner`, and in the editor
   `STEP_KINDS` (steps.ts), the card in `StepList.tsx`, and the checks in `validate.ts`.
 - The editor (editor.html, Preact) and the game bridge (`src/game/editorBridge.ts`) are dev-only and must stay out of

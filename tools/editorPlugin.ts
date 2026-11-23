@@ -1,26 +1,47 @@
 /**
  * Dev-server side of the Gambit Editor (editor.html).
  *
- *   GET  /__editor/content  → every content file: { files: { story: { data, hash }, … } }
+ *   GET  /__editor/content  → every content file: { files: { story: { data, hash }, 'area:martaHouse': … } }
  *   POST /__editor/save     ← { files: { story: { data, base } } }  (base = the hash the editor loaded)
  *
- * Only the files listed in CONTENT_FILES can be read or written. A save is refused (409) if a file changed on
- * disk since the editor loaded it (e.g. edited by hand), so nothing gets overwritten by accident.
+ * Only these files can be read or written: story.json, npcs.json, and the areas (src/data/areas/<id>.json, key
+ * 'area:<id>'). Saving an area with `data: null` deletes its file; a new area is saved with base NO_FILE.
+ * A save is refused (409) if a file changed on disk since the editor loaded it (e.g. edited by hand), so nothing
+ * gets overwritten by accident.
  * Files are written as JSON laid out for reading: one event step per line where possible.
  *
  * `apply: 'serve'`: this only exists on the dev server, never in the itch build.
  */
 import { createHash } from 'node:crypto';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, unlinkSync, writeFileSync } from 'node:fs';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { resolve } from 'node:path';
 import type { Plugin } from 'vite';
+import { TILE_CHARS } from '../src/world/tiles.ts';
 
 /** Content the editor may change: key → file (relative to the project root). */
 const CONTENT_FILES: Record<string, string> = {
   story: 'src/data/story.json',
   npcs: 'src/data/npcs.json',
 };
+const AREA_DIR = 'src/data/areas';
+const AREA_ID = /^[A-Za-z][A-Za-z0-9_]*$/;
+/** The "hash" of a file that doesn't exist (yet). */
+const NO_FILE = 'none';
+
+/** The file for a content key, or null if the editor may not touch it. */
+function fileOf(key: string): string | null {
+  if (CONTENT_FILES[key]) return CONTENT_FILES[key];
+  const id = key.startsWith('area:') ? key.slice(5) : '';
+  return AREA_ID.test(id) ? `${AREA_DIR}/${id}.json` : null;
+}
+
+function allKeys(root: string): string[] {
+  const areas = readdirSync(resolve(root, AREA_DIR))
+    .filter((f) => f.endsWith('.json'))
+    .map((f) => `area:${f.slice(0, -'.json'.length)}`);
+  return [...Object.keys(CONTENT_FILES), ...areas];
+}
 
 export function editorPlugin(): Plugin {
   let root = process.cwd();
@@ -44,9 +65,9 @@ async function handle(root: string, req: IncomingMessage, res: ServerResponse) {
   const path = (req.url ?? '').split('?')[0];
   if (req.method === 'GET' && path === '/content') {
     const files: Record<string, { data: unknown; hash: string }> = {};
-    for (const [key, file] of Object.entries(CONTENT_FILES)) {
-      const text = readText(resolve(root, file));
-      files[key] = { data: JSON.parse(text), hash: hash(text) };
+    for (const key of allKeys(root)) {
+      const text = readText(resolve(root, fileOf(key)!));
+      files[key] = { data: JSON.parse(text ?? '{}'), hash: hash(text) };
     }
     return send(res, 200, { files });
   }
@@ -55,20 +76,26 @@ async function handle(root: string, req: IncomingMessage, res: ServerResponse) {
     const body = JSON.parse(await readBody(req)) as { files?: Record<string, { data: unknown; base: string }> };
     const incoming = Object.entries(body.files ?? {});
     for (const [key, { data }] of incoming) {
-      if (!CONTENT_FILES[key]) return send(res, 400, { error: `unknown content file "${key}"` });
-      const problem = checkShape(key, data);
-      if (problem) return send(res, 400, { error: `${CONTENT_FILES[key]}: ${problem}` });
+      const file = fileOf(key);
+      if (!file) return send(res, 400, { error: `unknown content file "${key}"` });
+      if (data === null && !key.startsWith('area:')) return send(res, 400, { error: `${file} can't be deleted` });
+      const problem = data === null ? null : checkShape(key, data);
+      if (problem) return send(res, 400, { error: `${file}: ${problem}` });
     }
     // Check every file first, so a save either writes everything or nothing.
-    const conflicts = incoming
-      .filter(([key, { base }]) => hash(readText(resolve(root, CONTENT_FILES[key]))) !== base)
-      .map(([key]) => key);
+    const conflicts = incoming.filter(([key, { base }]) => hash(readText(resolve(root, fileOf(key)!))) !== base).map(([key]) => key);
     if (conflicts.length) return send(res, 409, { conflicts });
 
     const files: Record<string, { hash: string }> = {};
     for (const [key, { data }] of incoming) {
+      const file = resolve(root, fileOf(key)!);
+      if (data === null) {
+        if (existsSync(file)) unlinkSync(file);
+        files[key] = { hash: NO_FILE };
+        continue;
+      }
       const text = formatJson(data) + '\n';
-      writeFileSync(resolve(root, CONTENT_FILES[key]), text, 'utf8');
+      writeFileSync(file, text, 'utf8');
       files[key] = { hash: hash(text) };
     }
     return send(res, 200, { files });
@@ -86,21 +113,33 @@ function checkShape(key: string, data: unknown): string | null {
     for (const [id, steps] of Object.entries(data.events)) if (!Array.isArray(steps)) return `event "${id}" must be a list of steps`;
     if (!isObj(data.speakers)) return '"speakers" must be an object';
     if (!isObj(data.endScreen)) return '"endScreen" must be an object';
+    if (!isObj(data.newGame)) return '"newGame" must be an object';
   }
   if (key === 'npcs') {
     for (const [id, npc] of Object.entries(data)) {
       if (!isObj(npc) || typeof npc.name !== 'string' || !Array.isArray(npc.talk)) return `NPC "${id}" needs a name and talk steps`;
     }
   }
+  if (key.startsWith('area:')) {
+    const rows = data.tiles;
+    if (!Array.isArray(rows) || !rows.length || typeof rows[0] !== 'string' || !rows[0].length) return 'the map needs tiles';
+    for (const row of rows) {
+      if (typeof row !== 'string' || row.length !== rows[0].length) return 'every map row must be the same length';
+      for (const ch of row) if (!(ch in TILE_CHARS)) return `unknown map character "${ch}"`;
+    }
+    if (typeof data.name !== 'string') return 'the area needs a name';
+    for (const list of ['exits', 'npcs', 'enemies', 'triggers']) if (!Array.isArray(data[list])) return `"${list}" must be a list`;
+    if (!isObj(data.starts) || !isObj(data.encounters)) return '"starts" and "encounters" must be objects';
+  }
   return null;
 }
 
-function readText(file: string) {
-  return existsSync(file) ? readFileSync(file, 'utf8') : '{}';
+function readText(file: string): string | null {
+  return existsSync(file) ? readFileSync(file, 'utf8') : null;
 }
 
-function hash(text: string) {
-  return createHash('sha1').update(text.replace(/\r\n/g, '\n')).digest('hex');
+function hash(text: string | null) {
+  return text === null ? NO_FILE : createHash('sha1').update(text.replace(/\r\n/g, '\n')).digest('hex');
 }
 
 function readBody(req: IncomingMessage): Promise<string> {

@@ -1102,3 +1102,338 @@ body.dragging .gap-add {
 .tag {
   margin-right: 6px;
 }
+
+/* ── map painter ── */
+.map-page {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.map-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  padding: 8px 12px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+  flex: none;
+}
+.map-title {
+  font: 24px/1 var(--pixel);
+  color: var(--gold);
+  margin-right: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tool-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+}
+.tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 1px solid transparent;
+  padding: 3px 9px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.tool:hover:not(:disabled) {
+  color: var(--text);
+  border-color: transparent;
+}
+.tool.active {
+  background: var(--panel-3);
+  border-color: var(--line-2);
+  color: var(--text);
+}
+.zoom {
+  min-width: 26px;
+  text-align: center;
+  font-size: 13px;
+}
+.check {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  color: var(--muted);
+  cursor: pointer;
+}
+.swatch {
+  border: 1px solid #0d0b14;
+}
+.map-view {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.map-viewport {
+  position: relative; /* the stage's offsetLeft/Top are measured from here (zoom and scroll-to maths) */
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  background: #0d0b14 radial-gradient(circle at 1px 1px, #1e1a2b 1px, transparent 0) 0 0 / 12px 12px;
+}
+.map-stage {
+  position: relative;
+  margin: 32px;
+  width: max-content;
+  touch-action: none;
+  user-select: none;
+  box-shadow: 0 0 0 1px var(--line-2), 0 8px 30px #0008;
+}
+.map-stage canvas {
+  display: block;
+}
+.map-grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: linear-gradient(to right, #ffffff14 1px, transparent 1px), linear-gradient(to bottom, #ffffff14 1px, transparent 1px);
+}
+.map-overlay {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+.map-overlay rect,
+.map-overlay circle {
+  vector-effect: non-scaling-stroke;
+  fill: none;
+}
+.map-overlay .lbl {
+  font-family: system-ui, 'Segoe UI', sans-serif;
+  font-weight: 600;
+  fill: var(--text);
+  paint-order: stroke;
+  stroke: #0d0b14e0;
+  stroke-linejoin: round;
+}
+.lbl.center {
+  text-anchor: middle;
+}
+.lbl.gold {
+  fill: var(--gold);
+}
+.lbl.blue {
+  fill: var(--blue);
+}
+.lbl.red {
+  fill: #ff9a8a;
+}
+.lbl.green {
+  fill: var(--green);
+}
+.map-overlay .trigger-box {
+  fill: #f2d16b22;
+  stroke: var(--gold);
+  stroke-width: 1.5px;
+  stroke-dasharray: 5 3;
+}
+.map-overlay .trigger-box.bad {
+  fill: #e8705a2a;
+  stroke: var(--red);
+}
+.map-overlay .exit-box {
+  stroke: var(--blue);
+  stroke-width: 2px;
+}
+.map-overlay .exit-box.bad {
+  stroke: var(--red);
+}
+.map-overlay .group-box {
+  stroke: #e8705a99;
+  stroke-width: 1.5px;
+  stroke-dasharray: 3 3;
+}
+.map-overlay .group-box.active {
+  stroke: #ff9a8a;
+  stroke-dasharray: none;
+}
+.map-overlay .aggro {
+  stroke: #e8705a66;
+  stroke-width: 1px;
+  fill: #e8705a10;
+}
+.map-overlay .selection {
+  stroke: #fff;
+  stroke-width: 2px;
+  filter: drop-shadow(0 0 2px #000);
+}
+.map-overlay .resize-handle {
+  fill: #fff;
+  stroke: #0d0b14;
+  stroke-width: 1px;
+  pointer-events: all;
+  cursor: nwse-resize;
+}
+.map-overlay .paint-preview {
+  stroke: var(--gold);
+  stroke-width: 2px;
+  fill: #f2d16b22;
+}
+.map-overlay .hover-box {
+  stroke: #ffffffb0;
+  stroke-width: 1px;
+}
+.map-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 5px 12px;
+  font-size: 12px;
+  background: var(--panel);
+  border-top: 1px solid var(--line);
+  flex: none;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.map-status .muted {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.palette {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+}
+.pick-list {
+  display: grid;
+  gap: 3px;
+}
+.pal {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 6px;
+  background: none;
+  border-color: transparent;
+  text-align: left;
+  font-size: 13px;
+  position: relative;
+}
+.pal:hover:not(:disabled) {
+  background: var(--panel-3);
+  border-color: transparent;
+}
+.pal.active {
+  background: var(--panel-3);
+  border-color: var(--gold);
+}
+.pal .muted {
+  margin-left: auto;
+}
+.pal-icon {
+  width: 32px;
+  display: flex;
+  justify-content: center;
+}
+.blocks {
+  margin-left: auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--line-2);
+}
+.fields.compact {
+  margin: 4px 0;
+  gap: 8px;
+  grid-template-columns: minmax(0, 1fr);
+}
+.fields.compact label > span:first-child {
+  width: 82px;
+}
+.fields.compact select,
+.fields.compact input:not([type='checkbox']):not([type='color']) {
+  min-width: 0;
+}
+.fields.compact .row select {
+  flex: 1;
+}
+.fields.compact .rename-wrap {
+  flex: 1;
+  min-width: 0;
+}
+.fields.compact .rename-wrap input {
+  width: 100%;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.fields .inline-check {
+  align-items: flex-start;
+  gap: 8px;
+  cursor: pointer;
+}
+.fields .inline-check input {
+  flex: none;
+  margin-top: 3px;
+}
+.fields .inline-check span:first-of-type {
+  width: auto;
+  color: var(--text);
+  font-size: 13px;
+}
+.fields .num {
+  width: 64px;
+  flex: none;
+}
+h4.sub {
+  margin: 8px 0 0;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--muted);
+  font-weight: 600;
+}
+.edges {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.edge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.edge > span {
+  width: 48px;
+}
+.card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 8px;
+}
+.thing-list {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  font-size: 13px;
+  columns: 2;
+  column-gap: 12px;
+}
+.thing-list li {
+  break-inside: avoid;
+  padding: 1px 0;
+}
+.list.top-pad {
+  padding-top: 12px;
+}

@@ -1,20 +1,9 @@
-import type { AreaDef, Marker } from '../data/areas/types';
+import type { AreaDef, TilePos } from '../data/areas/types';
 import type { EnemyTypeId } from '../data/enemies';
-import { TILE_CHARS, Tile, isBlocking } from './tiles';
-
-/** Markers every area understands; an area's own legend can add to or override these. */
-const SHARED_MARKERS: Record<string, Marker> = {
-  '@': { start: 'default' },
-  w: { enemy: 'wolf' },
-  b: { enemy: 'bandit' },
-  a: { enemy: 'banditArcher' },
-  c: { enemy: 'acolyte' },
-};
+import { TILE_CHARS } from './tiles';
 
 /** Enemies within this many tiles of each other (chained) belong to the same group. */
-const GROUP_DISTANCE = 4;
-
-type TilePos = { x: number; y: number };
+export const GROUP_DISTANCE = 4;
 
 export interface EncounterDef {
   /** The group's name if one of its enemies has `group` set, otherwise 'group-<n>' (numbered west to east). */
@@ -26,14 +15,12 @@ export interface EncounterDef {
   enemies: { type: EnemyTypeId; x: number; y: number }[];
 }
 
-type PlacedEnemy = EncounterDef['enemies'][number] & { group?: string };
-
 export interface LoadedMap {
   width: number;
   height: number;
   /** Tile ids, [y][x]. */
   tiles: number[][];
-  /** Named arrival points. */
+  /** Named arrival points. Always has at least one. */
   starts: Map<string, TilePos>;
   /** Exit tiles, keyed "x,y". */
   exits: Map<string, { to: string; at: string }>;
@@ -43,79 +30,64 @@ export interface LoadedMap {
   triggers: Map<string, string>;
 }
 
-/** Turns an area's ASCII map + legend into tiles, start points, exits, NPCs, enemy groups and story triggers. */
-export function loadMap(area: AreaDef): LoadedMap {
-  const rows = area.map;
-  const legend = { ...SHARED_MARKERS, ...area.legend };
+/**
+ * Turns an area file into tiles, start points, exits, NPCs, enemy groups and story triggers.
+ * Only a broken tile grid is an error; things placed off the map are skipped (the editor points those out).
+ */
+export function loadMap(area: AreaDef, isEnemyType: (type: string) => boolean = () => true): LoadedMap {
+  const rows = area.tiles;
   const height = rows.length;
-  const width = rows[0].length;
-  rows.forEach((r, y) => {
+  const width = rows[0]?.length ?? 0;
+  if (!height || !width) throw new Error(`${area.id}: the map has no tiles`);
+  const tiles = rows.map((r, y) => {
     if (r.length !== width) throw new Error(`${area.id}: map row ${y} is ${r.length} wide, expected ${width}`);
+    return [...r].map((ch, x) => {
+      const t = TILE_CHARS[ch];
+      if (t === undefined) throw new Error(`${area.id}: unknown map character "${ch}" at ${x},${y}`);
+      return t;
+    });
   });
+  const onMap = (p: TilePos) => p.x >= 0 && p.y >= 0 && p.x < width && p.y < height;
 
-  const tiles: number[][] = [];
-  const placed: { marker: Marker; x: number; y: number }[] = [];
-  for (let y = 0; y < height; y++) {
-    const line: number[] = [];
-    for (let x = 0; x < width; x++) {
-      const ch = rows[y][x];
-      const tile = TILE_CHARS[ch];
-      if (tile === undefined) {
-        const marker = legend[ch];
-        if (!marker) throw new Error(`${area.id}: unknown map character "${ch}" at ${x},${y}`);
-        placed.push({ marker, x, y });
-      }
-      line.push(tile ?? Tile.Grass);
-    }
-    tiles.push(line);
+  const starts = new Map(Object.entries(area.starts ?? {}).filter(([, p]) => onMap(p)));
+  if (!starts.size) starts.set('default', { x: Math.floor(width / 2), y: Math.floor(height / 2) });
+
+  const exits = new Map<string, { to: string; at: string }>();
+  for (const e of area.exits ?? []) if (onMap(e)) exits.set(`${e.x},${e.y}`, { to: e.to, at: e.at });
+
+  const triggers = new Map<string, string>();
+  for (const t of area.triggers ?? []) {
+    for (let y = t.y; y < t.y + t.h; y++) for (let x = t.x; x < t.x + t.w; x++) if (onMap({ x, y })) triggers.set(`${x},${y}`, t.event);
   }
 
-  const out: LoadedMap = {
+  const enemies = (area.enemies ?? []).filter((e) => onMap(e) && isEnemyType(e.type)) as PlacedEnemy[];
+  const encounters = groupEnemies(enemies).map((g) => ({
+    id: g.id,
+    unique: false,
+    ...area.encounters?.[g.id],
+    enemies: g.enemies.map(({ type, x, y }) => ({ type, x, y })),
+  }));
+
+  return {
     width,
     height,
     tiles,
-    starts: new Map(),
-    exits: new Map(),
-    npcs: [],
-    encounters: [],
-    triggers: new Map(),
+    starts,
+    exits,
+    npcs: (area.npcs ?? []).filter(onMap),
+    encounters,
+    triggers,
   };
-  const enemies: PlacedEnemy[] = [];
-  for (const { marker: m, x, y } of placed) {
-    tiles[y][x] = m.tile ? Tile[m.tile] : groundUnder(rows, x, y);
-    const key = `${x},${y}`;
-    if ('start' in m) out.starts.set(m.start, { x, y });
-    else if ('exit' in m) out.exits.set(key, m.exit);
-    else if ('enemy' in m) enemies.push({ type: m.enemy, x, y, group: m.group });
-    else if ('npc' in m) out.npcs.push({ id: m.npc, x, y });
-    else if ('trigger' in m) out.triggers.set(key, m.trigger);
-  }
-  if (!out.starts.size) throw new Error(`${area.id}: map has no start point`);
-  out.encounters = groupEnemies(enemies).map((g) => ({ ...g, ...area.encounters?.[g.id] }));
-  for (const name of Object.keys(area.encounters ?? {})) {
-    if (!out.encounters.some((g) => g.id === name)) throw new Error(`${area.id}: no enemy group named "${name}" on the map`);
-  }
-  return out;
 }
 
-/** The ground a marker stands on: the most common walkable tile around it. */
-function groundUnder(rows: string[], x: number, y: number): number {
-  const counts = new Map<number, number>();
-  for (let dy = -1; dy <= 1; dy++) {
-    for (let dx = -1; dx <= 1; dx++) {
-      const t = TILE_CHARS[rows[y + dy]?.[x + dx] ?? ''];
-      if (t !== undefined && !isBlocking(t)) counts.set(t, (counts.get(t) ?? 0) + 1);
-    }
-  }
-  let best: number = Tile.Grass;
-  let most = 0;
-  for (const [t, n] of counts) if (n > most) [best, most] = [t, n];
-  return best;
-}
+type PlacedEnemy = { type: EnemyTypeId; x: number; y: number; group?: string };
 
-/** Groups enemies standing near each other, numbered west to east (or named, if a member has a group name). */
-function groupEnemies(all: PlacedEnemy[]): EncounterDef[] {
-  const groups: (typeof all)[] = [];
+/**
+ * Groups enemies standing near each other, numbered west to east (or named, if a member has a group name).
+ * The groups hold the very objects passed in.
+ */
+export function groupEnemies<E extends { x: number; y: number; group?: string }>(all: E[]): { id: string; enemies: E[] }[] {
+  const groups: E[][] = [];
   const left = [...all];
   while (left.length) {
     const group = [left.shift()!];
@@ -128,12 +100,8 @@ function groupEnemies(all: PlacedEnemy[]): EncounterDef[] {
     }
     groups.push(group);
   }
-  const minX = (g: typeof all) => Math.min(...g.map((e) => e.x));
+  const minX = (g: E[]) => Math.min(...g.map((e) => e.x));
   return groups
     .sort((a, b) => minX(a) - minX(b))
-    .map((g, i) => ({
-      id: g.find((e) => e.group)?.group ?? `group-${i + 1}`,
-      unique: false,
-      enemies: g.map(({ type, x, y }) => ({ type, x, y })),
-    }));
+    .map((g, i) => ({ id: g.find((e) => e.group)?.group ?? `group-${i + 1}`, enemies: g }));
 }

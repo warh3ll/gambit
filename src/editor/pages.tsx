@@ -5,7 +5,9 @@ import { go, useNav } from './nav';
 import { StepEditor } from './StepList';
 import { ID_PATTERN, freshId, hex, speakers, stepText } from './steps';
 import { type Content, allOwners, commit, useStore, walkSteps } from './store';
-import { AutoText, Card, Headshot, NpcSprite, RenameField, renameKey } from './ui';
+import { renameEventRefs, renameNpcRefs } from './map/edit';
+import { MapPage } from './map/MapPanels';
+import { AutoText, Headshot, NpcSprite, RenameField, renameKey } from './ui';
 import type { Problem } from './validate';
 import { WORLD, eventUses, npcAreas } from './world';
 
@@ -153,14 +155,12 @@ function EventPage({ id, onTest }: { id: string; onTest: () => void }) {
   const { content } = useStore();
   const steps = content.story.events[id];
   const uses = eventUses(id);
-  const locked =
-    id === 'intro'
-      ? 'The game plays “intro” when a new game starts, so it keeps this name.'
-      : uses.length
-        ? 'The map uses this name (in its area file), so renaming it here would disconnect it. This becomes editable with the map painter.'
-        : undefined;
+  const locked = id === 'intro' ? 'The game plays “intro” when a new game starts, so it keeps this name.' : undefined;
   const rename = (next: string) => {
-    commit((c) => (c.story.events = renameKey(c.story.events, id, next)));
+    commit((c) => {
+      c.story.events = renameKey(c.story.events, id, next);
+      renameEventRefs(c, id, next); // map triggers, fights and arrivals follow
+    });
     go('events', next);
   };
   const remove = () => {
@@ -207,7 +207,7 @@ function EventPage({ id, onTest }: { id: string; onTest: () => void }) {
             </span>
           ))
         ) : (
-          <span class="chip warn">Never plays yet: add a story trigger with this name to a map, or use it after a fight.</span>
+          <span class="chip warn">Never plays yet: on the Map tab, draw a story trigger for it, or play it after a fight or on arrival.</span>
         )}
       </div>
       <StepEditor owner={{ kind: 'event', id }} steps={steps} />
@@ -249,6 +249,7 @@ function NpcPage({ id, onTest }: { id: string; onTest: () => void }) {
     commit((c) => {
       c.npcs = renameKey(c.npcs, id, next);
       renameSpeaker(c, id, next);
+      renameNpcRefs(c, id, next); // where they stand on the maps
     });
     go('npcs', next);
   };
@@ -286,7 +287,6 @@ function NpcPage({ id, onTest }: { id: string; onTest: () => void }) {
           <span>Id</span>
           <RenameField
             value={id}
-            locked={areas.length ? 'A map places this NPC by this id (in its area file), so it keeps it for now. This becomes editable with the map painter.' : undefined}
             autoFocus={id.startsWith('newNpc')}
             check={(n) => idProblem(n, speakerTaken(content, n))}
             onRename={rename}
@@ -300,11 +300,18 @@ function NpcPage({ id, onTest }: { id: string; onTest: () => void }) {
         <label>
           <span>Stands in</span>
           {areas.length ? (
-            <span>{areas.map((a) => a.name).join(', ')}</span>
-          ) : (
-            <span class="muted">
-              Not on any map yet. Put them on one with <code class="mono">x: {`{ npc: '${id}' }`}</code> in an area's legend.
+            <span>
+              {areas.map((a, i) => (
+                <>
+                  {i > 0 && ', '}
+                  <a key={a.id} href={`#map/${a.id}`}>
+                    {a.name}
+                  </a>
+                </>
+              ))}
             </span>
+          ) : (
+            <span class="muted">Not on any map yet. Place them with the NPC tool on the Map tab.</span>
           )}
         </label>
       </div>
@@ -447,68 +454,6 @@ function EndScreenPage() {
       <div class="end-preview">
         <div class="end-title">{end.title}</div>
         <div class="end-text">{end.text}</div>
-      </div>
-    </div>
-  );
-}
-
-function MapPage() {
-  return (
-    <div class="page wide">
-      <header class="page-head">
-        <div class="page-title">
-          <span class="kicker">Coming next</span>
-          <h1>Map painter</h1>
-        </div>
-      </header>
-      <p class="muted">
-        Painting maps and placing NPCs, exits, enemies and triggers comes in the next step. Until then, areas are edited in src/data/areas/. Here's
-        what the editor reads from them:
-      </p>
-      <div class="area-grid">
-        {WORLD.areas.map((a) => (
-          <Card key={a.id} title={a.name} right={<span class="muted small mono">{a.id}</span>}>
-            {a.error && <p class="problem error">{a.error}</p>}
-            <dl class="facts">
-              <dt>Kind</dt>
-              <dd>{a.kind}</dd>
-              <dt>Start points</dt>
-              <dd class="mono">{a.starts.join(', ') || '—'}</dd>
-              <dt>Story triggers</dt>
-              <dd>
-                {a.triggers.length
-                  ? a.triggers.map((t) => (
-                      <a key={t} class="mono tag" href={`#events/${t}`}>
-                        {t}
-                      </a>
-                    ))
-                  : '—'}
-              </dd>
-              <dt>Named fights</dt>
-              <dd class="mono">{a.groups.map((g) => g.id + (g.onWin ? ` → ${g.onWin}` : '')).join(', ') || '—'}</dd>
-              <dt>NPCs</dt>
-              <dd>
-                {a.npcs.length
-                  ? a.npcs.map((n) => (
-                      <a key={n} class="mono tag" href={`#npcs/${n}`}>
-                        {n}
-                      </a>
-                    ))
-                  : '—'}
-              </dd>
-              {a.onEnter && (
-                <>
-                  <dt>On arrival</dt>
-                  <dd>
-                    <a class="mono tag" href={`#events/${a.onEnter}`}>
-                      {a.onEnter}
-                    </a>
-                  </dd>
-                </>
-              )}
-            </dl>
-          </Card>
-        ))}
       </div>
     </div>
   );

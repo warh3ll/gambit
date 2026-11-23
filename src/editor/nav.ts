@@ -47,6 +47,12 @@ export function useNav(): Nav {
 }
 export const getNav = () => nav;
 
+/** Calls `fn` whenever what's open changes (tab, item or selected step). */
+export function onNav(fn: () => void): () => void {
+  listeners.add(fn);
+  return () => listeners.delete(fn);
+}
+
 /** Opens a tab (and an item in it). */
 export function go(tab: Tab, id: string | null = null, step: SelectedStep | null = null) {
   nav = { tab, id, step };

@@ -44,6 +44,12 @@ export function connectEditor(game: Phaser.Game) {
         if (!error) window.focus();
         break;
       }
+      case 'goto': {
+        const error = w ? w.editorGoto(msg.area, msg.x, msg.y) : 'The game is on the title screen. Start or continue a game first.';
+        post({ type: 'played', game: id, request: msg.request, error });
+        if (!error) window.focus();
+        break;
+      }
       case 'setFlag':
         session.setFlag(msg.flag, msg.value);
         w?.editorFlagsChanged();

@@ -72,6 +72,20 @@ export function playInGame(steps: Step[]): Promise<string | null> {
   });
 }
 
+/** "Play from here": puts the party on a tile in the game. Resolves with null once there, or a reason it couldn't. */
+export function gotoInGame(area: string, x: number, y: number): Promise<string | null> {
+  const game = currentGame();
+  if (!game) return Promise.resolve('No game is open. Open the game (http://localhost:8080) in another tab.');
+  const request = nextRequest++;
+  return new Promise((resolve) => {
+    waiting.set(request, resolve);
+    post({ type: 'goto', game: game.game, request, area, x, y });
+    setTimeout(() => {
+      if (waiting.delete(request)) resolve("The game didn't answer. Try reloading the game tab.");
+    }, 2000);
+  });
+}
+
 export function setGameFlag(flag: string, value: FlagValue) {
   const game = currentGame();
   if (game) post({ type: 'setFlag', game: game.game, flag, value });

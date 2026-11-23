@@ -1,8 +1,9 @@
 /**
- * The editor's state: the content being edited (story.json + npcs.json), undo/redo, saving to the dev server,
- * and a draft in the browser so unsaved work survives a reload.
+ * The editor's state: the content being edited (story.json, npcs.json and the areas), undo/redo, saving to the
+ * dev server, and a draft in the browser so unsaved work survives a reload.
  */
 import { useEffect, useState } from 'preact/hooks';
+import type { AreaFile } from '../data/areas/types';
 import type { NpcFile } from '../data/npcs';
 import type { StoryFile } from '../data/story';
 import type { Step } from '../game/script';
@@ -10,10 +11,31 @@ import type { Step } from '../game/script';
 export interface Content {
   story: StoryFile;
   npcs: NpcFile;
+  /** Area id → area (src/data/areas/<id>.json). */
+  areas: Record<string, AreaFile>;
 }
-export type FileKey = keyof Content;
-const FILE_KEYS: FileKey[] = ['story', 'npcs'];
-export const FILE_NAMES: Record<FileKey, string> = { story: 'src/data/story.json', npcs: 'src/data/npcs.json' };
+/** A content file: 'story', 'npcs', or 'area:<id>'. */
+export type FileKey = string;
+
+/** The file on disk for a content key. */
+export const fileName = (key: FileKey) =>
+  key.startsWith('area:') ? `src/data/areas/${key.slice(5)}.json` : `src/data/${key}.json`;
+
+/** Every file the content consists of, key → data. */
+function filesOf(c: Content): Record<FileKey, unknown> {
+  const out: Record<FileKey, unknown> = { story: c.story, npcs: c.npcs };
+  for (const [id, a] of Object.entries(c.areas)) out[`area:${id}`] = orderedArea(a);
+  return out;
+}
+
+/** An area's keys in the file's usual order (so a newly set `onEnter` doesn't end up after the tiles). */
+function orderedArea(a: AreaFile): AreaFile {
+  const { name, kind, onEnter, starts, exits, npcs, enemies, triggers, encounters, tiles, ...rest } = a;
+  return { name, kind, onEnter, starts, exits, npcs, enemies, triggers, encounters, ...rest, tiles };
+}
+
+/** The "hash" of a file that doesn't exist (see tools/editorPlugin.ts). */
+const NO_FILE = 'none';
 
 /** Whose steps: an event in story.json or an NPC's conversation. */
 export type Owner = { kind: 'event'; id: string } | { kind: 'npc'; id: string };
@@ -25,7 +47,7 @@ export type Banner = { kind: 'info' | 'error' | 'conflict' | 'draft'; text: stri
 interface State {
   status: 'loading' | 'ready' | 'saving' | 'failed';
   content: Content;
-  /** What's on disk (JSON text per file), to know what's unsaved. */
+  /** What's on disk (JSON text per file; missing = no such file), to know what's unsaved. */
   saved: Record<FileKey, string>;
   hashes: Record<FileKey, string>;
   past: Content[];
@@ -35,12 +57,12 @@ interface State {
   pendingDraft: Content | null;
 }
 
-const empty: Content = { story: { speakers: {}, endScreen: { title: '', text: '' }, events: {} }, npcs: {} };
+const empty: Content = { story: { newGame: { area: '' }, speakers: {}, endScreen: { title: '', text: '' }, events: {} }, npcs: {}, areas: {} };
 let state: State = {
   status: 'loading',
   content: empty,
-  saved: { story: '', npcs: '' },
-  hashes: { story: '', npcs: '' },
+  saved: {},
+  hashes: {},
   past: [],
   future: [],
   banner: null,
@@ -102,13 +124,20 @@ export function redo() {
   writeDraft();
 }
 
-export const dirtyFiles = (s: State = state): FileKey[] => FILE_KEYS.filter((k) => JSON.stringify(s.content[k]) !== s.saved[k]);
+/** Files whose content differs from what's on disk (including new and deleted areas). */
+export const dirtyFiles = (s: State = state): FileKey[] => differing(s.content, s.saved);
+
+function differing(c: Content, saved: Record<FileKey, string>): FileKey[] {
+  const files = filesOf(c);
+  const keys = new Set([...Object.keys(files), ...Object.keys(saved)]);
+  return [...keys].filter((k) => (files[k] === undefined ? undefined : JSON.stringify(files[k])) !== saved[k]);
+}
 
 export const setBanner = (banner: Banner) => set({ banner });
 
 // ── loading & saving ──
 
-type Loaded = Record<FileKey, { data: unknown; hash: string }>;
+type Loaded = Record<FileKey, { data: unknown; hash: string } | undefined>;
 
 async function fetchContent(): Promise<Loaded> {
   const res = await fetch('/__editor/content', { cache: 'no-store' });
@@ -119,9 +148,15 @@ async function fetchContent(): Promise<Loaded> {
 export async function load() {
   try {
     const files = await fetchContent();
-    const content = { story: files.story.data, npcs: files.npcs.data } as Content;
-    const saved = { story: JSON.stringify(content.story), npcs: JSON.stringify(content.npcs) };
-    const hashes = { story: files.story.hash, npcs: files.npcs.hash };
+    const areas: Content['areas'] = {};
+    for (const [key, f] of Object.entries(files)) if (key.startsWith('area:') && f) areas[key.slice(5)] = f.data as AreaFile;
+    const content = { story: files.story!.data, npcs: files.npcs!.data, areas } as Content;
+    const saved: Record<FileKey, string> = {};
+    const hashes: Record<FileKey, string> = {};
+    for (const [key, data] of Object.entries(filesOf(content))) {
+      saved[key] = JSON.stringify(data);
+      hashes[key] = files[key]!.hash;
+    }
     set({ status: 'ready', content, saved, hashes, past: [], future: [] });
     offerDraft();
   } catch (err) {
@@ -138,9 +173,10 @@ export async function save(overwrite = false) {
     const hashes = { ...state.hashes };
     if (overwrite) {
       const disk = await fetchContent();
-      for (const k of dirty) hashes[k] = disk[k].hash;
+      for (const k of dirty) hashes[k] = disk[k]?.hash ?? NO_FILE;
     }
-    const files = Object.fromEntries(dirty.map((k) => [k, { data: state.content[k], base: hashes[k] }]));
+    const current = filesOf(state.content);
+    const files = Object.fromEntries(dirty.map((k) => [k, { data: current[k] ?? null, base: hashes[k] ?? NO_FILE }]));
     const res = await fetch('/__editor/save', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -148,7 +184,7 @@ export async function save(overwrite = false) {
     });
     const body = (await res.json()) as { files?: Record<string, { hash: string }>; conflicts?: FileKey[]; error?: string };
     if (res.status === 409 && body.conflicts) {
-      const names = body.conflicts.map((k) => FILE_NAMES[k]).join(' and ');
+      const names = body.conflicts.map(fileName).join(' and ');
       set({
         status: 'ready',
         banner: {
@@ -162,7 +198,8 @@ export async function save(overwrite = false) {
     if (!res.ok || !body.files) throw new Error(body.error ?? `the dev server said ${res.status}`);
     const saved = { ...state.saved };
     for (const k of dirty) {
-      saved[k] = JSON.stringify(state.content[k]);
+      if (current[k] === undefined) delete saved[k];
+      else saved[k] = JSON.stringify(current[k]);
       hashes[k] = body.files[k].hash;
     }
     set({ status: 'ready', saved, hashes, banner: null });
@@ -209,9 +246,10 @@ function offerDraft() {
     draft = null;
   }
   if (!draft?.content?.story || !draft.content.npcs) return;
-  const differs = FILE_KEYS.some((k) => JSON.stringify(draft.content[k]) !== state.saved[k]);
-  if (!differs) return clearDraft();
-  const sameBase = FILE_KEYS.every((k) => draft.hashes?.[k] === state.hashes[k]);
+  draft.content.areas ??= {}; // drafts from before the map painter
+  if (!differing(draft.content, state.saved).length) return clearDraft();
+  const keys = new Set([...Object.keys(draft.hashes ?? {}), ...Object.keys(state.hashes)]);
+  const sameBase = [...keys].every((k) => (draft.hashes?.[k] ?? NO_FILE) === (state.hashes[k] ?? NO_FILE));
   if (sameBase) {
     set({ content: draft.content, past: [state.content], banner: { kind: 'info', text: 'Restored your unsaved changes from last time.' } });
   } else {

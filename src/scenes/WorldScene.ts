@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { TILE_SIZE } from '../config';
 import { ENEMIES } from '../data/enemies';
-import { getArea } from '../data/areas';
+import { AREAS, getArea, onAreaChanged } from '../data/areas';
 import type { AreaDef } from '../data/areas/types';
 import { NPCS } from '../data/npcs';
 import { EVENTS } from '../data/story';
@@ -26,6 +26,10 @@ export interface WorldData {
   area?: string;
   /** Start point name in that area (set when arriving through an exit). */
   entry?: string;
+  /** Reloading the same area after its map was edited (dev): no fade, no arrival events. */
+  reload?: boolean;
+  /** Arrive on this tile instead (the editor's "Play from here", dev). */
+  tile?: { x: number; y: number };
 }
 
 /** Talking range: the leader stops and talks once this close to an NPC. */
@@ -52,6 +56,7 @@ export class WorldScene extends Phaser.Scene {
   combat!: CombatManager;
   private area!: AreaDef;
   private entry: string | undefined;
+  private arriveAt: { x: number; y: number } | undefined;
   private map!: LoadedMap;
   /** NPC the party is walking up to, to talk. */
   private talkTarget: Npc | null = null;
@@ -78,6 +83,9 @@ export class WorldScene extends Phaser.Scene {
   private ignoreClicksUntil = 0;
   /** The slice's ending has played. */
   private ended = false;
+  private reloading = false;
+  /** This area's map was edited in the Gambit Editor; reload it once nothing is going on (dev). */
+  private mapEdited = false;
 
   constructor() {
     super('World');
@@ -86,6 +94,7 @@ export class WorldScene extends Phaser.Scene {
   init(data: WorldData) {
     this.area = getArea(data?.area ?? session.data.area);
     this.entry = data?.entry;
+    this.arriveAt = data?.tile;
     this.enemies = [];
     this.talkTarget = null;
     this.transitioning = false;
@@ -93,10 +102,12 @@ export class WorldScene extends Phaser.Scene {
     this.trailTimer = 0;
     this.ended = false;
     this.dialogOpen = false;
+    this.reloading = !!data?.reload;
+    this.mapEdited = false;
   }
 
   create() {
-    this.map = loadMap(this.area);
+    this.map = loadMap(this.area, (type) => type in ENEMIES);
     const { width, height, tiles } = this.map;
     const tilemap = this.make.tilemap({ data: tiles, tileWidth: TILE_SIZE, tileHeight: TILE_SIZE });
     const tileset = tilemap.addTilesetImage('tiles');
@@ -108,11 +119,14 @@ export class WorldScene extends Phaser.Scene {
     const spawn = this.pathfinder.tileCenter(startTile.x, startTile.y);
     this.party = new Party(this, this.pathfinder, spawn);
     this.enemies = this.spawnEncounters();
-    this.npcs = this.map.npcs.map((n) => {
+    this.npcs = this.map.npcs.flatMap((n) => {
       const def = NPCS[n.id];
-      if (!def) throw new Error(`${this.area.id}: unknown NPC "${n.id}"`);
+      if (!def) {
+        console.warn(`${this.area.id}: unknown NPC "${n.id}"`);
+        return [];
+      }
       const p = this.pathfinder.tileCenter(n.x, n.y);
-      return new Npc(this, def, p.x, p.y);
+      return [new Npc(this, def, p.x, p.y)];
     });
     const start = this.applySave(spawn);
     this.combat = new CombatManager(this.party, this.enemies);
@@ -130,8 +144,9 @@ export class WorldScene extends Phaser.Scene {
     const cam = this.cameras.main;
     if (this.area.kind !== 'outdoor') cam.setBackgroundColor('#0d0b14');
     pixelCamera(this, false, (view) => this.fitCamera(view));
-    cam.fadeIn(FADE_MS, 13, 11, 20);
+    if (!this.reloading) cam.fadeIn(FADE_MS, 13, 11, 20);
     cam.startFollow(this.party.leader.sprite, true, 0.12, 0.12);
+    if (this.reloading) cam.centerOn(this.party.leader.x, this.party.leader.y);
     this.party.on('leaderChanged', () => {
       cam.startFollow(this.party.leader.sprite, true, 0.12, 0.12);
       if (!this.combat.inCombat) this.saveGame();
@@ -156,14 +171,21 @@ export class WorldScene extends Phaser.Scene {
       if (document.visibilityState === 'hidden' && !this.combat.inCombat && !this.scene.isPaused()) this.saveGame();
     };
     document.addEventListener('visibilitychange', onHide);
+    // Dev: when this area's file is saved from the editor, reload it in place.
+    const stopWatching = onAreaChanged((id) => {
+      if (id === this.area.id) this.mapEdited = true;
+    });
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      stopWatching();
       document.removeEventListener('visibilitychange', onHide);
       this.input.setDefaultCursor('default');
     });
 
     this.scene.launch('UI', { party: this.party, combat: this.combat, areaName: this.area.name });
-    if (this.entry) this.saveGame(); // arrived through an exit: save the new area
-    this.time.delayedCall(this.entry ? FADE_MS : 400, () => void this.arrivalEvents());
+    if (this.reloading) return;
+    const arrived = this.entry || this.arriveAt;
+    if (arrived) this.saveGame(); // arrived through an exit (or from the editor): save the new area
+    this.time.delayedCall(arrived ? FADE_MS : 400, () => void this.arrivalEvents());
   }
 
   // ── saving ──
@@ -184,13 +206,17 @@ export class WorldScene extends Phaser.Scene {
     let start = spawn;
     let facing = 0; // east
     const entryTile = this.entry ? this.map.starts.get(this.entry) : undefined;
-    if (entryTile) {
+    if (this.arriveAt) {
+      start = this.pathfinder.tileCenter(this.arriveAt.x, this.arriveAt.y);
+    } else if (entryTile) {
       start = this.pathfinder.tileCenter(entryTile.x, entryTile.y);
       // Face the door you came through, so the followers line up behind the leader, away from it.
       facing = this.towardsNearestExit(start);
     } else if (save.area === this.area.id && save.position) {
       start = save.position;
     }
+    // The map may have changed under a saved position (e.g. a tree painted there).
+    start = this.pathfinder.nearestWalkablePoint(start) ?? spawn;
     this.party.face(facing);
     this.party.placeAt(start);
     return start;
@@ -227,6 +253,7 @@ export class WorldScene extends Phaser.Scene {
     for (const e of this.enemies) e.tickTimers(dt);
 
     if (this.transitioning) return;
+    if (this.mapEdited && !this.combat.inCombat && !this.runner.running && !this.ended) return this.reloadMap();
     if (!this.combat.inCombat) this.recordTrail(dt);
     if (!this.combat.inCombat && !this.runner.running) {
       if (this.checkTriggers()) return; // a story event is starting
@@ -345,6 +372,16 @@ export class WorldScene extends Phaser.Scene {
     return null;
   }
 
+  /** Puts the party on a tile of an area ("Play from here"). Returns why it can't right now, or null. */
+  editorGoto(area: string, x: number, y: number): string | null {
+    if (this.ended || this.transitioning) return 'The game is between areas. Try again in a moment.';
+    if (this.combat.inCombat) return 'A fight is going on in the game. Try again after it.';
+    if (this.runner.running || this.scene.isPaused()) return 'Something is open in the game (dialogue or tactics). Close it first.';
+    if (!AREAS[area]) return "The game doesn't have this area yet: save it first.";
+    this.travel(area, undefined, { x, y });
+    return null;
+  }
+
   /** Saves after the editor changed a flag, unless the game is mid-fight or mid-event (the next autosave has it). */
   editorFlagsChanged() {
     if (!this.combat.inCombat && !this.runner.running && !this.ended && !this.transitioning) this.saveGame();
@@ -360,8 +397,16 @@ export class WorldScene extends Phaser.Scene {
     return true;
   }
 
+  /** Dev: rebuilds this area from its edited file, keeping the party where it stands. */
+  private reloadMap() {
+    this.mapEdited = false;
+    this.transitioning = true;
+    this.saveGame();
+    this.scene.restart({ area: this.area.id, reload: true } satisfies WorldData);
+  }
+
   /** Fades out and loads another area (or reloads this one), arriving at start point `at`. */
-  private travel(area: string, at: string) {
+  private travel(area: string, at?: string, tile?: { x: number; y: number }) {
     if (this.transitioning) return;
     this.transitioning = true;
     this.talkTarget = null;
@@ -370,7 +415,7 @@ export class WorldScene extends Phaser.Scene {
     const cam = this.cameras.main;
     cam.fadeOut(FADE_MS, 13, 11, 20);
     cam.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () =>
-      this.scene.restart({ area, entry: at } satisfies WorldData),
+      this.scene.restart({ area, entry: at, tile } satisfies WorldData),
     );
   }
 

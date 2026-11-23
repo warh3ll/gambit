@@ -1,4 +1,5 @@
 {
+  "newGame": { "area": "barrelsbyRoad" },
   "speakers": { "stranger": { "name": "The Stranger", "color": "#4a3a5a" } },
   "endScreen": { "title": "End of the demo", "text": "Thanks for playing! The road from Barrelsby goes on…" },
   "events": {

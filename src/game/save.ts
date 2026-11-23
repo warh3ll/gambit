@@ -1,5 +1,5 @@
 import { MAX_TACTIC_ROWS } from '../config';
-import { START_AREA } from '../data/areas';
+import { startArea } from '../data/areas';
 import { type CharacterDef, DEFAULT_LEADER_ID, PARTY } from '../data/party';
 import { ACTIONS, type TacticRow, type TargetGroup, TARGETS, TYPES } from '../data/tactics';
 
@@ -50,7 +50,7 @@ export function newSaveData(): SaveData {
   return {
     version: SAVE_VERSION,
     savedAt: 0,
-    area: START_AREA,
+    area: startArea(),
     position: null,
     leaderId: DEFAULT_LEADER_ID,
     flags: {},

@@ -30,7 +30,7 @@ refining those tactics.
 | Language | TypeScript, bundled with Vite |
 | Resolution | Canvas fills the browser window (any aspect, incl. ultrawide). Whole-number pixel zoom so ~360 world px fit top to bottom (1080p → 3×, 1440p → 4×); wider screens see more. UI text at full resolution. |
 | Tile size | 16×16 |
-| Maps | Areas in `src/data/areas/`: an ASCII map (one character per tile) plus a legend for exits, NPCs, enemies and story triggers. A map painter in the Gambit Editor comes next (E2); Tiled import stays possible for later. |
+| Maps | Areas in `src/data/areas/<id>.json`, painted in the Gambit Editor's Map tab (E2): tile rows (one character per tile) plus lists of start points, exits, NPCs, enemies and story triggers. Tiled import stays possible for later. |
 | Content editor | **The Gambit Editor**: http://localhost:8080/editor.html while `npm run dev` runs. Dev server only, never in the itch build. |
 | Release | `npm run build` → zip `dist/` → upload as HTML5 game on itch.io |
 
@@ -43,7 +43,7 @@ refining those tactics.
 | `src/data/story.json` | **Story events** (intro, story triggers, fight-won events), extra speakers, end screen. Made in the Gambit Editor; `story.ts` loads it |
 | `src/game/script.ts` | **Event steps** (`say`, `narrate`, `choice`, `setFlag`, `ifFlag` / `ifNotFlag`, `fight`, `heal`, `wait`, `teleport`, `endGame`) |
 | `src/systems/EventRunner.ts` | Runs event steps one after another |
-| `src/data/areas/` | **Areas**: one file per area (map + legend); list new areas in `index.ts` |
+| `src/data/areas/` | **Areas**: one JSON file per area (the file name is the area's id), made in the Gambit Editor's Map tab; `index.ts` loads them all |
 | `src/data/npcs.json` | **NPCs**: name, look, conversation. Made in the Gambit Editor; `npcs.ts` loads it |
 | `src/data/art.ts` | **Replacing placeholder art**: list real PNGs here, key → file in `public/art/` |
 | `src/systems/TacticEngine.ts` | Picks which tactic row fires (top to bottom, first match) |
@@ -58,7 +58,7 @@ refining those tactics.
 | `src/world/` | Units (party members, enemies), NPCs, party formation, tiles, area map loader |
 | `src/scenes/` | Phaser scenes: Boot (art), World (map, movement, story triggers, retry), UI (HUD), Tactics (editor), Dialog, End |
 | `src/view.ts` | Full-window pixel camera (whole-number zoom), UI font and text style |
-| `editor.html`, `src/editor/` | **The Gambit Editor** (Preact): events & dialogue, NPCs, speakers, problems, test in game |
+| `editor.html`, `src/editor/` | **The Gambit Editor** (Preact): events & dialogue, NPCs, speakers, problems, test in game; the map painter in `src/editor/map/` |
 | `tools/editorPlugin.ts` | Dev-server side of the editor: reads and saves the content JSON files |
 | `src/game/editorBridge.ts` | Dev only: lets the editor play events and change flags in the open game tab |
 | `docs/TACTICS.md` | Designer-facing list of tactics, planned and implemented |
@@ -214,13 +214,34 @@ next to the game tab. It saves straight into the project's data files, and the g
 - **Save** (Ctrl+S) writes `src/data/story.json` and `src/data/npcs.json`. Undo / redo with Ctrl+Z / Ctrl+Y.
   Unsaved work is kept in the browser if the tab closes. If a file was changed outside the editor
   since it was opened, the editor asks before overwriting it.
-- *Notes:* names the map refers to (an event used by a trigger, an NPC placed on a map) can't be renamed in the
-  editor yet; that comes with the map painter. "If flag" can now also check that a flag is *not* set.
+- *Notes:* "If flag" can now also check that a flag is *not* set. (Since E2, renaming an event or NPC also
+  updates the maps that use it.)
   New speakers or new looks reload the game tab (their placeholder art is made at startup); text changes don't.
 
-### E2 — Map painter *(next)*
-- Paint tiles; place NPCs, exits, start points, enemies and story triggers; link them to events in the editor.
-- Areas move from `src/data/areas/*.ts` to editor-owned files, like events did.
+### E2 — Map painter ✅ *(branch `feature/editor`)*
+- **Map tab**: the list of areas, and the open area drawn like in the game (placeholders or real art from `art.ts`),
+  with labels for exits, start points, NPCs, fights and story triggers. Zoom with Ctrl+wheel or −/+, pan with
+  Space+drag (or the scrollbars), grid and labels can be switched off.
+- **Painting tiles**: Brush (B), Rectangle (R) and Fill (G), with a tile palette on the right; right-click (or
+  Alt-click) on the map picks up a tile. Tiles that block walking are marked in the palette.
+- **Placing things**: Start point (P), Exit (X), NPC (N), Enemy (E), story Trigger (T, drag a rectangle). Select (V)
+  to pick something up and drag it; arrow keys nudge it, Delete removes it, clicking again reaches what's underneath.
+- **The panel on the right** edits what's selected: where an exit leads (area and start point, with a jump there),
+  which NPC stands there, an enemy's type and its **fight** (name, story fight that stays beaten, event after winning),
+  a trigger's event and size. Events can be picked or made new right there, and opened on the Events tab.
+  With nothing selected it shows the **area**: name, id, kind, event on arrival, whether new games start here,
+  and its size (add or remove rows and columns at each edge).
+- **Problems** now include the maps: exits to missing areas or start points, triggers without an event, enemies or
+  exits on tiles that block walking, areas nothing leads to, and so on. Clicking one opens the map at that spot.
+- **Renaming** an area, start point, fight, event or NPC updates everything that refers to it (exits, "Move party"
+  and "Start fight" steps, triggers, fight events).
+- **In the game**: saving a map updates the running game. If the party is in that area, it reloads in place once no
+  fight or dialogue is going on. **▶ Play from here** (Y) puts the party on any tile in the game tab (it plays the
+  saved map).
+- *Notes:* areas are now `src/data/areas/<id>.json`; where new games start is `newGame` in `story.json` (ticked on
+  the area). Story triggers are rectangles now instead of single tiles. Enemies still form one fight when within
+  4 tiles of each other; the painter outlines each fight. The door picture is its own tile (`D`) now; an exit is
+  just where stepping leads away, so paint a door (or anything) under it. Existing saves keep working (no change).
 
 ### E3 — Skill tree editor *(with M14)*
 - One tree per class, laid out tier by tier. Add nodes to a tier, link each node to the nodes it follows on the tier
@@ -293,6 +314,8 @@ next to the game tab. It saves straight into the project's data files, and the g
 | 2026-11-23 | M12 is on hold: the designer is building an editor in a separate branch/chat first. |
 | 2026-11-23 | World building happens in our own visual editor (the Gambit Editor, in the dev server) rather than external tools: event & dialogue editor first (E1), then a map painter (E2). |
 | 2026-11-23 | Story events and NPCs are stored as JSON files that the editor reads and writes (`story.json`, `npcs.json`). |
+| 2026-11-23 | Areas are JSON files too, one per area (`src/data/areas/<id>.json`), made with the map painter (E2). Tiles stay one character per tile; everything placed on the map is listed with its position. Story triggers are rectangles. |
+| 2026-11-23 | Saving a map in the editor updates the running game (the area reloads in place when calm). "Play from here" puts the party on any tile. |
 
 ## Open questions for the designer
 

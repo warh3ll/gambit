@@ -2,7 +2,10 @@
  * Finds problems in the content: things that would break or silently do nothing in the game.
  * Errors are things the game can't do; warnings are things that are probably a mistake.
  */
+import type { TilePos } from '../data/areas/types';
 import type { Step } from '../game/script';
+import { checkAreas } from './map/check';
+import type { Selection } from './map/state';
 import { endsEvent, speakers } from './steps';
 import { type Content, type ListPath, type Owner, allOwners, walkSteps } from './store';
 import { WORLD, areaById, builtInFlags, eventUses, npcAreas } from './world';
@@ -17,6 +20,10 @@ export interface Problem {
   missingEvent?: string;
   /** An NPC a map expects but which doesn't exist: offer to create it. */
   missingNpc?: string;
+  /** A map problem: the area, the thing to select, and the tile to show. */
+  area?: string;
+  thing?: Selection;
+  at?: TilePos;
 }
 
 /** Flags set anywhere (by events or by the game itself). */
@@ -39,7 +46,7 @@ export function validate(c: Content): Problem[] {
   const flags = new Set(knownFlags(c));
   const allGroups = new Set(WORLD.areas.flatMap((a) => a.groups.map((g) => g.id)));
 
-  for (const a of WORLD.areas) if (a.error) out.push({ level: 'error', text: `The map of ${a.name} can't be read: ${a.error}` });
+  for (const a of WORLD.areas) if (a.error) out.push({ level: 'error', area: a.id, text: `The map of ${a.name} can't be read: ${a.error}` });
 
   for (const { owner, steps } of allOwners(c)) {
     const name = owner.kind === 'event' ? `Event “${owner.id}”` : `${c.npcs[owner.id]?.name ?? owner.id}’s conversation`;
@@ -108,14 +115,8 @@ export function validate(c: Content): Problem[] {
   }
 
   // What the maps expect.
-  const events = c.story.events;
-  if (!events.intro) out.push({ level: 'error', missingEvent: 'intro', text: 'There is no “intro” event (it plays when a new game starts).' });
-  for (const a of WORLD.areas) {
-    for (const t of a.triggers) if (!events[t]) out.push({ level: 'error', missingEvent: t, text: `${a.name} has a story trigger “${t}” but no event with that name.` });
-    for (const g of a.groups) if (g.onWin && !events[g.onWin]) out.push({ level: 'error', missingEvent: g.onWin, text: `${a.name}: the fight “${g.id}” plays “${g.onWin}” after winning, but there's no such event.` });
-    if (a.onEnter && !events[a.onEnter]) out.push({ level: 'error', missingEvent: a.onEnter, text: `${a.name} plays “${a.onEnter}” on arrival, but there's no such event.` });
-    for (const n of a.npcs) if (!c.npcs[n]) out.push({ level: 'error', missingNpc: n, text: `${a.name} has an NPC “${n}” on its map, but no NPC with that id.` });
-  }
+  if (!c.story.events.intro) out.push({ level: 'error', missingEvent: 'intro', text: 'There is no “intro” event (it plays when a new game starts).' });
+  out.push(...checkAreas(c));
 
   // Speaker ids must be unique across party, NPCs and other speakers.
   const seen = new Map<string, number>();
