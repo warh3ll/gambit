@@ -19,7 +19,7 @@ export class Enemy extends Unit {
       maxHp: def.maxHp,
       threat: def.threat,
       speed: def.speed,
-      weapon: WEAPONS[def.weapon],
+      weapon: { ...WEAPONS[def.weapon], power: def.attackPower },
       tactics: def.tactics,
       texture: `enemy-${def.id}`,
       x,

@@ -21,13 +21,22 @@ npm run preview   # serve the production build
 | Left click (map) | Move the party (outside combat) |
 | Click a portrait | Make that character the leader |
 | T | Open / close the tactics editor (pauses the game). Edits are saved in the browser. |
+| Click / Space / Enter | Next line of dialogue |
 
-## Debug keys (temporary)
+## Debug keys (dev server only, not in the built game)
 
 | Key | Effect |
 |---|---|
+| J | Jump to just before the next fight |
 | V | Show / hide enemy aggro ranges |
 | K | Instantly win the current fight |
+
+## Editing content
+
+- Story text: [src/data/story.ts](src/data/story.ts)
+- The map: [src/data/maps/barrelsbyRoad.ts](src/data/maps/barrelsbyRoad.ts) (ASCII, legend at the top)
+- Enemies: [src/data/enemies.ts](src/data/enemies.ts) · Party: [src/data/party.ts](src/data/party.ts)
+- Real art: drop PNGs in `public/art/` and list them in [src/data/art.ts](src/data/art.ts)
 
 ## Docs
 

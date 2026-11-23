@@ -228,6 +228,18 @@ export const ACTIONS = {
     effect: { kind: 'damage', power: 16 },
     projectile: true,
   },
+
+  // ── enemy-only actions ──
+  shadowBolt: {
+    id: 'shadowBolt',
+    label: 'Shadow Bolt',
+    description: 'A bolt of dark magic. (The Stranger)',
+    groups: ['enemy'],
+    range: 120,
+    cooldown: 2.5,
+    effect: { kind: 'damage', power: 34 },
+    projectile: true,
+  },
 } satisfies Record<string, ActionDef>;
 
 export type ActionId = keyof typeof ACTIONS;

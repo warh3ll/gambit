@@ -63,14 +63,26 @@ export class Party extends Phaser.Events.EventEmitter {
     });
   }
 
-  /** After a defeat: everyone back on their feet at full HP, at `p`. */
-  respawn(p: Point) {
+  /** HP of each member, keyed by id (used for retrying a fight). */
+  snapshotHp(): Map<string, number> {
+    return new Map(this.members.map((m) => [m.id, m.hp]));
+  }
+
+  /** After a defeat: everyone back on their feet with the given HP (full if not given), at `p`. */
+  restore(p: Point, hp?: Map<string, number>, facing = this.leader.facing) {
     for (const m of this.members) {
-      m.revive(m.maxHp);
+      m.revive(hp?.get(m.id) ?? m.maxHp);
       m.resetCombatState();
       m.cooldowns.clear();
     }
+    this.face(facing);
     this.placeAt(p);
+  }
+
+  /** Turns the party (and its formation) to face `angle`, e.g. before placing it. */
+  face(angle: number) {
+    for (const m of this.members) m.facing = angle;
+    this.formationAngle = angle;
   }
 
   get followers(): PartyMember[] {

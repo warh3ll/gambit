@@ -2,22 +2,31 @@ import Phaser from 'phaser';
 import { TILE_SIZE } from '../config';
 import { ENEMIES } from '../data/enemies';
 import { PARTY } from '../data/party';
-import { TILE_COUNT, Tile } from '../world/testMap';
+import { ART_FILES } from '../data/art';
+import { TILE_COUNT, Tile } from '../world/tiles';
 
 export const PORTRAIT_SIZE = 22;
 
 /**
- * Loads (or, for now, generates) assets and hands over to the world.
- * Everything here is placeholder art drawn with Graphics.
+ * Loads real art listed in src/data/art.ts, then generates placeholder art
+ * (drawn with Graphics) for every key that wasn't loaded.
  */
 export class BootScene extends Phaser.Scene {
   constructor() {
     super('Boot');
   }
 
+  preload() {
+    for (const [key, file] of Object.entries(ART_FILES)) this.load.image(key, file);
+  }
+
   create() {
     const g = this.add.graphics();
     const ink = 0x0d0b14;
+    // Only generate a placeholder if no real art was loaded for that key.
+    const make = (key: string, w: number, h: number) => {
+      if (!this.textures.exists(key)) g.generateTexture(key, w, h);
+    };
 
     // Characters: coloured body with outline and eyes.
     for (const c of PARTY) {
@@ -25,7 +34,7 @@ export class BootScene extends Phaser.Scene {
       g.fillStyle(ink).fillRect(0, 0, 12, 16);
       g.fillStyle(c.color).fillRect(1, 1, 10, 14);
       g.fillStyle(ink).fillRect(3, 4, 2, 2).fillRect(7, 4, 2, 2);
-      g.generateTexture(`char-${c.id}`, 12, 16);
+      make(`char-${c.id}`, 12, 16);
     }
 
     // Enemies: coloured body with red eyes, sized per type.
@@ -35,7 +44,7 @@ export class BootScene extends Phaser.Scene {
       g.fillStyle(ink).fillRect(0, 0, w, h);
       g.fillStyle(e.color).fillRect(1, 1, w - 2, h - 2);
       g.fillStyle(0xff3b3b).fillRect(w - 5, 3, 2, 2).fillRect(w - 9, 3, 2, 2);
-      g.generateTexture(`enemy-${e.id}`, w, h);
+      make(`enemy-${e.id}`, w, h);
     }
 
     // Portraits: face crop of the same placeholder.
@@ -45,7 +54,16 @@ export class BootScene extends Phaser.Scene {
       g.fillStyle(0x2a2438).fillRect(0, 0, p, p);
       g.fillStyle(c.color).fillRect(3, 4, p - 6, p - 4);
       g.fillStyle(ink).fillRect(6, 9, 2, 3).fillRect(p - 8, 9, 2, 3);
-      g.generateTexture(`portrait-${c.id}`, p, p);
+      make(`portrait-${c.id}`, p, p);
+    }
+    // The Stranger's portrait: hooded face.
+    {
+      g.clear();
+      g.fillStyle(0x2a2438).fillRect(0, 0, p, p);
+      g.fillStyle(0x1a1424).fillRect(2, 2, p - 4, p - 2);
+      g.fillStyle(0x4a3a5a).fillRect(5, 6, p - 10, p - 6);
+      g.fillStyle(0xc58cff).fillRect(6, 10, 2, 2).fillRect(p - 8, 10, 2, 2);
+      make('portrait-stranger', p, p);
     }
 
     // Portrait frames: normal and leader.
@@ -57,33 +75,37 @@ export class BootScene extends Phaser.Scene {
       g.fillStyle(ink).fillRect(0, 0, PORTRAIT_SIZE, PORTRAIT_SIZE);
       g.fillStyle(color).fillRect(1, 1, PORTRAIT_SIZE - 2, PORTRAIT_SIZE - 2);
       g.fillStyle(ink).fillRect(2, 2, PORTRAIT_SIZE - 4, PORTRAIT_SIZE - 4);
-      g.generateTexture(key, PORTRAIT_SIZE, PORTRAIT_SIZE);
+      make(key, PORTRAIT_SIZE, PORTRAIT_SIZE);
     }
 
     // Leader marker: small gold chevron.
     g.clear();
     g.fillStyle(ink).fillTriangle(0, 0, 8, 0, 4, 5);
     g.fillStyle(0xf2d16b).fillTriangle(1, 1, 7, 1, 4, 4);
-    g.generateTexture('leader-marker', 8, 5);
+    make('leader-marker', 8, 5);
 
     // Click marker: ring.
     g.clear();
     g.lineStyle(1, 0xffffff).strokeCircle(6, 6, 5);
-    g.generateTexture('click-marker', 12, 12);
+    make('click-marker', 12, 12);
 
     // Projectiles: wand bolt, arrow, firebolt.
     g.clear();
     g.fillStyle(0xc9a6ff).fillRect(0, 0, 4, 4);
     g.fillStyle(0xffffff).fillRect(1, 1, 2, 2);
-    g.generateTexture('proj-wand', 4, 4);
+    make('proj-wand', 4, 4);
     g.clear();
     g.fillStyle(0x8a6a44).fillRect(0, 1, 6, 1);
     g.fillStyle(0xd9d9d9).fillRect(6, 0, 2, 3);
-    g.generateTexture('proj-bow', 8, 3);
+    make('proj-bow', 8, 3);
     g.clear();
     g.fillStyle(0xd9542b).fillCircle(3, 3, 3);
     g.fillStyle(0xffd27a).fillCircle(3, 3, 1.5);
-    g.generateTexture('proj-firebolt', 6, 6);
+    make('proj-firebolt', 6, 6);
+    g.clear();
+    g.fillStyle(0x3a1a4a).fillCircle(3, 3, 3);
+    g.fillStyle(0xc58cff).fillCircle(3, 3, 1.5);
+    make('proj-shadowBolt', 6, 6);
 
     this.makeTileset(g);
     g.destroy();
@@ -97,6 +119,14 @@ export class BootScene extends Phaser.Scene {
     const grass = (ox: number) => {
       g.fillStyle(0x355435).fillRect(ox, 0, T, T);
       g.fillStyle(0x3d5f3b).fillRect(ox + 3, 4, 1, 1).fillRect(ox + 11, 9, 1, 1).fillRect(ox + 6, 13, 1, 1);
+    };
+    const forestFloor = (ox: number) => {
+      g.fillStyle(0x283d2c).fillRect(ox, 0, T, T);
+      g.fillStyle(0x31482f).fillRect(ox + 2, 3, 1, 1).fillRect(ox + 12, 7, 1, 1).fillRect(ox + 7, 12, 2, 1);
+    };
+    const water = (ox: number) => {
+      g.fillStyle(0x2b4f7a).fillRect(ox, 0, T, T);
+      g.fillStyle(0x3d6a9a).fillRect(ox + 2, 5, 5, 1).fillRect(ox + 9, 11, 4, 1);
     };
     for (let i = 0; i < TILE_COUNT; i++) {
       const ox = i * T;
@@ -121,15 +151,42 @@ export class BootScene extends Phaser.Scene {
           g.fillStyle(0x82828e).fillRect(ox + 3, 3, 5, 3);
           break;
         case Tile.Water:
-          g.fillStyle(0x2b4f7a).fillRect(ox, 0, T, T);
-          g.fillStyle(0x3d6a9a).fillRect(ox + 2, 5, 5, 1).fillRect(ox + 9, 11, 4, 1);
+          water(ox);
           break;
         case Tile.Path:
           g.fillStyle(0x7a6544).fillRect(ox, 0, T, T);
           g.fillStyle(0x6b573a).fillRect(ox + 4, 3, 2, 1).fillRect(ox + 10, 10, 2, 1);
           break;
+        case Tile.ForestFloor:
+          forestFloor(ox);
+          break;
+        case Tile.ForestTree:
+          forestFloor(ox);
+          g.fillStyle(0x3a2a1c).fillRect(ox + 7, 11, 2, 5);
+          g.fillStyle(0x142a18).fillCircle(ox + 8, 7, 8);
+          g.fillStyle(0x1e3a22).fillCircle(ox + 7, 6, 5);
+          break;
+        case Tile.House:
+          // Roof seen from above: tiles in rows, dark eaves.
+          g.fillStyle(0x5a2e26).fillRect(ox, 0, T, T);
+          g.fillStyle(0x7a3e30);
+          for (let r = 0; r < 4; r++) g.fillRect(ox, r * 4, T, 3);
+          g.fillStyle(0x3a1e1a).fillRect(ox, T - 1, T, 1);
+          break;
+        case Tile.Fence:
+          grass(ox);
+          g.fillStyle(0x6b5232).fillRect(ox, 6, T, 2).fillRect(ox, 11, T, 2);
+          g.fillStyle(0x4a3822).fillRect(ox + 2, 4, 2, 10).fillRect(ox + 11, 4, 2, 10);
+          break;
+        case Tile.Bridge:
+          water(ox);
+          g.fillStyle(0x8a6a44).fillRect(ox, 1, T, T - 2);
+          g.fillStyle(0x6b5232);
+          for (let c = 0; c < 4; c++) g.fillRect(ox + c * 4 + 3, 1, 1, T - 2);
+          g.fillStyle(0x4a3822).fillRect(ox, 0, T, 1).fillRect(ox, T - 1, T, 1);
+          break;
       }
     }
-    g.generateTexture('tiles', T * TILE_COUNT, T);
+    if (!this.textures.exists('tiles')) g.generateTexture('tiles', T * TILE_COUNT, T);
   }
 }

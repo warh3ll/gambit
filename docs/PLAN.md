@@ -30,7 +30,7 @@ refining those tactics.
 | Language | TypeScript, bundled with Vite |
 | Resolution | Canvas fills the browser window (any aspect, incl. ultrawide). Whole-number pixel zoom so ~360 world px fit top to bottom (1080p → 3×, 1440p → 4×); wider screens see more. UI text at full resolution. |
 | Tile size | 16×16 |
-| Maps | Tiled (`.tmj`) once we move past placeholder maps |
+| Maps | ASCII text maps in `src/data/maps/` (one character per tile, editable in any text editor). Tiled can come later, together with a real tileset. |
 | Release | `npm run build` → zip `dist/` → upload as HTML5 game on itch.io |
 
 ### Code map
@@ -39,6 +39,9 @@ refining those tactics.
 |---|---|
 | `src/data/tactics.ts` | **All tactic pieces**: Actions, Targets, Types, tactic row format |
 | `src/data/party.ts` | The party: stats, known actions, default tactics |
+| `src/data/story.ts` | **All story text**: intro, story triggers, ending, end screen |
+| `src/data/maps/` | **Maps** as ASCII grids (legend at the top of each file) |
+| `src/data/art.ts` | **Replacing placeholder art**: list real PNGs here, key → file in `public/art/` |
 | `src/systems/TacticEngine.ts` | Picks which tactic row fires (top to bottom, first match) |
 | `src/systems/Pathfinder.ts` | A* pathfinding on the tile grid + path smoothing |
 | `src/data/weapons.ts` | Weapon types (melee, wand, bow) that define the basic Attack |
@@ -47,8 +50,8 @@ refining those tactics.
 | `src/systems/CombatSystem.ts` | Runs tactics: picks rows, walks into range, performs actions, projectiles |
 | `src/systems/CombatText.ts` | Floating combat text: damage, heals, buff/debuff names |
 | `src/game/tacticsStore.ts` | Saves edited tactics in the browser (localStorage) |
-| `src/world/` | Units (party members, enemies), party formation, placeholder test map + encounters |
-| `src/scenes/` | Phaser scenes: Boot (placeholder art), World (map + movement), UI (HUD/portraits), Tactics (editor) |
+| `src/world/` | Units (party members, enemies), party formation, tiles, ASCII map loader |
+| `src/scenes/` | Phaser scenes: Boot (art), World (map, movement, story triggers, retry), UI (HUD), Tactics (editor), Dialog, End |
 | `src/view.ts` | Full-window pixel camera (whole-number zoom), UI font and text style |
 | `docs/TACTICS.md` | Designer-facing list of tactics, planned and implemented |
 
@@ -111,9 +114,25 @@ More classes and characters can be found later in the game.
   editor puts the shown character back to their starting rows.
 - *Not doing:* showing which row fired during a fight (designer's call). A combat log is not planned for now.
 
-### M6 — Slice content
+### M6 — Slice content ✅ *(branch `feature/slice-content`)*
 - A small area with 3–4 escalating encounters and a final fight that tests the player's tactics.
 - Defeat → retry the encounter; victory → end-of-slice screen.
+- *Notes:* **The road from Barrelsby**: the town's edge (start) → fields → a bridge → into the woods → a clearing.
+  1. 2 Wolves by the road (warm-up).
+  2. 2 Bandits + Bandit Archer guarding the bridge.
+  3. 2 Bandits + an **Acolyte** (heals its side) at a forest clearing.
+  4. **The Stranger** + Bandit guard + 2 Acolytes (final fight).
+- Story: an intro, two story triggers on the road (forest edge; meeting the Stranger), an ending, an end screen.
+  All text is placeholder writing in `src/data/story.ts`. Dialogue pauses the game; click / Space / Enter to continue.
+- Defeat: the party retries from a spot on its path just outside the fight, with the HP it had when the fight started.
+  The enemies in that fight reset; groups already beaten stay beaten.
+- Art: still generated placeholders. Real art can replace them one image at a time via `src/data/art.ts`.
+- Enemies now have their own attack damage (not the weapon's). Debug keys only exist on the dev server; **J** jumps to the next fight.
+- Meeting the Stranger (story trigger 2) starts the final fight as soon as the dialogue ends.
+- *Balance (placeholder numbers, from automated runs):* fights 1–3 are won with the default tactics, slowly wearing the party down.
+  The final fight is **lost with the default tactics**, even at full HP: everyone piles onto the nearest enemy.
+  Switching damage dealers to *Lowest HP* (kill the Acolytes first) and Hyne to *HP below 75%* wins it
+  comfortably at full HP, and about half the time with the HP you typically arrive with.
 
 ### M7 — Art & audio pass
 - Real sprites, tileset, UI skin, sounds and music.
@@ -148,11 +167,13 @@ More classes and characters can be found later in the game.
 | 2026-11-23 | No in-fight indicator of which tactic row fired. |
 | 2026-11-23 | Floating combat text: white damage, green heals, gold ability name on buffed allies, purple ability name on debuffed enemies. Taunt counts as a debuff. |
 | 2026-11-23 | Edited tactics are saved in the browser (localStorage) for now, until there is a real save system. |
+| 2026-11-23 | Slice setting: the party is on its way to confront the mysterious stranger seen around Barrelsby, who coaxes townsfolk into the woods with promises of riches. |
+| 2026-11-23 | Defeat: retry from just before the last encounter started. |
+| 2026-11-23 | Art: Claude provides placeholders until the designer replaces them with real art (art is the main bottleneck). |
 
 ## Open questions for the designer
 
 1. **Progression** — are new Actions/Types unlocked over time (found, learned, bought), or all available from the start?
-2. **Defeat** — what happens when the party wipes? (Placeholder: respawn at the start at full HP, the fight resets.)
-3. **Art** — will you provide art, or should we start from a free placeholder pack?
-4. **Slice setting** — where and when in the story does the vertical slice happen?
-5. **Escape** — should the party ever be able to flee a fight? *(parked for later)*
+2. **Story text** — everything in `src/data/story.ts` is placeholder writing. Rewrite freely; who is the Stranger?
+3. **Final fight difficulty** — see M6 notes; how hard should it be with the default tactics?
+4. **Escape** — should the party ever be able to flee a fight? *(parked for later)*

@@ -12,6 +12,8 @@ export interface EnemyDef {
   maxHp: number;
   speed: number;
   weapon: WeaponId;
+  /** Damage of the basic Attack (overrides the weapon's power). */
+  attackPower: number;
   /** How dangerous this enemy is rated (used by the "Most dangerous" type). */
   threat: number;
   /** Distance in pixels at which this enemy notices the party and a fight starts. */
@@ -31,6 +33,7 @@ export const ENEMIES = {
     maxHp: 90,
     speed: 75,
     weapon: 'melee',
+    attackPower: 9,
     threat: 1,
     aggroRadius: 72,
     actions: ['attack'],
@@ -44,6 +47,7 @@ export const ENEMIES = {
     maxHp: 140,
     speed: 55,
     weapon: 'melee',
+    attackPower: 13,
     threat: 2,
     aggroRadius: 64,
     actions: ['attack'],
@@ -57,12 +61,47 @@ export const ENEMIES = {
     maxHp: 100,
     speed: 55,
     weapon: 'bow',
+    attackPower: 11,
     threat: 3,
     aggroRadius: 96,
     actions: ['attack'],
     tactics: [row('attack', 'enemy', 'hpBelow50'), row('attack', 'enemy', 'any')],
     color: 0x4f7a3a,
     size: { w: 12, h: 16 },
+  },
+  acolyte: {
+    id: 'acolyte',
+    name: 'Acolyte',
+    maxHp: 110,
+    speed: 55,
+    weapon: 'wand',
+    attackPower: 8,
+    threat: 3,
+    aggroRadius: 80,
+    actions: ['heal', 'attack'],
+    // The Stranger's followers: keep their side alive, otherwise pelt the party.
+    tactics: [row('heal', 'ally', 'hpBelow50'), row('attack', 'enemy', 'any')],
+    color: 0x6a4a8a,
+    size: { w: 12, h: 16 },
+  },
+  stranger: {
+    id: 'stranger',
+    name: 'The Stranger',
+    maxHp: 650,
+    speed: 50,
+    weapon: 'wand',
+    attackPower: 12,
+    threat: 5,
+    aggroRadius: 110,
+    actions: ['shadowBolt', 'hex', 'attack'],
+    tactics: [
+      row('shadowBolt', 'enemy', 'hpBelow50'), // finish off the weak
+      row('hex', 'enemy', 'highestHp'), // curse the toughest
+      row('shadowBolt', 'enemy', 'any'),
+      row('attack', 'enemy', 'any'),
+    ],
+    color: 0x2a2236,
+    size: { w: 14, h: 20 },
   },
 } satisfies Record<string, EnemyDef>;
 

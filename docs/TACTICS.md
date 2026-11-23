@@ -97,6 +97,7 @@ Status effects:
 | Ward | Oxleth | Self, Ally | Buff: takes less damage for 6s | 100 | 8s | ✅ |
 | Pierce | Arthur | Enemy | 18 damage | 32 | 4s | ✅ |
 | Firebolt | Telara | Enemy | 16 damage | 120 | 2s | ✅ |
+| Shadow Bolt | The Stranger (enemy only) | Enemy | 34 damage | 120 | 2.5s | ✅ |
 
 All actions work in combat as of M3.
 
@@ -106,14 +107,21 @@ All actions work in combat as of M3.
 ## Enemy tactics
 
 Each enemy type has preset rows, using the same pieces. From an enemy's point of view,
-"Enemy" means the player's party. Defined in [`src/data/enemies.ts`](../src/data/enemies.ts).
+"Enemy" means the player's party and "Any ally" means its own side. Enemies use their weapon's range and
+speed, but have their own attack damage. Defined in [`src/data/enemies.ts`](../src/data/enemies.ts).
 
-| Enemy | Weapon | # | Action | Target | Type |
-|---|---|---|---|---|---|
-| Wolf | Melee | 1 | Attack | Enemy | Lowest HP |
-| Bandit | Melee | 1 | Attack | Enemy | Any |
-| Bandit Archer | Bow | 1 | Attack | Enemy | HP below 50% |
-| | | 2 | Attack | Enemy | Any |
+| Enemy | HP | Weapon (damage) | # | Action | Target | Type |
+|---|---|---|---|---|---|---|
+| Wolf | 90 | Melee (9) | 1 | Attack | Enemy | Lowest HP |
+| Bandit | 140 | Melee (13) | 1 | Attack | Enemy | Any |
+| Bandit Archer | 100 | Bow (11) | 1 | Attack | Enemy | HP below 50% |
+| | | | 2 | Attack | Enemy | Any |
+| Acolyte | 110 | Wand (8) | 1 | Heal | Any ally | HP below 50% |
+| | | | 2 | Attack | Enemy | Any |
+| The Stranger | 650 | Wand (12) | 1 | Shadow Bolt | Enemy | HP below 50% |
+| | | | 2 | Hex | Enemy | Highest HP |
+| | | | 3 | Shadow Bolt | Enemy | Any |
+| | | | 4 | Attack | Enemy | Any |
 
 ## Default tactics
 

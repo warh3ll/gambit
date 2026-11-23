@@ -50,7 +50,8 @@ export class CombatManager extends Phaser.Events.EventEmitter {
     }
   }
 
-  private engageGroup(groupId: string) {
+  /** Starts (or joins) a fight with every living enemy in this group. */
+  engageGroup(groupId: string) {
     const joining = this.enemies.filter((e) => e.groupId === groupId && e.alive && !this.engaged.has(e));
     if (!joining.length) return;
     for (const e of joining) {
