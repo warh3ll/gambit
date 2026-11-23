@@ -20,7 +20,7 @@ export interface ClassInfo {
   starts: string[];
 }
 
-/** Every class: those of the party (src/data/party.ts), plus any that only have a tree so far. */
+/** Every class, in alphabetical order: those of the party (src/data/party.ts), plus any that only have a tree so far. */
 export function classList(c: Content): ClassInfo[] {
   const out = new Map<string, ClassInfo>();
   for (const p of PARTY) {
@@ -32,7 +32,7 @@ export function classList(c: Content): ClassInfo[] {
   for (const id of Object.keys(c.trees.classes)) {
     if (!out.has(id)) out.set(id, { id, name: id.charAt(0).toUpperCase() + id.slice(1), members: [], starts: [] });
   }
-  return [...out.values()];
+  return [...out.values()].sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export const classInfo = (c: Content, id: string) => classList(c).find((x) => x.id === id);
