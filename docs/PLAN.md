@@ -120,7 +120,7 @@ More classes and characters can be found later in the game.
 - *Notes:* **The road from Barrelsby**: the town's edge (start) → fields → a bridge → into the woods → a clearing.
   1. 2 Wolves by the road (warm-up).
   2. 2 Bandits + Bandit Archer guarding the bridge.
-  3. 2 Bandits + an **Acolyte** (heals its side) at a forest clearing.
+  3. 2 Bandits + an **Acolyte** (ranged, wand) at a forest clearing.
   4. **The Stranger** + Bandit guard + 2 Acolytes (final fight).
 - Story: an intro, two story triggers on the road (forest edge; meeting the Stranger), an ending, an end screen.
   All text is placeholder writing in `src/data/story.ts`. Dialogue pauses the game; click / Space / Enter to continue.
@@ -130,9 +130,8 @@ More classes and characters can be found later in the game.
 - Enemies now have their own attack damage (not the weapon's). Debug keys only exist on the dev server; **J** jumps to the next fight.
 - Meeting the Stranger (story trigger 2) starts the final fight as soon as the dialogue ends.
 - *Balance (placeholder numbers, from automated runs):* fights 1–3 are won with the default tactics, slowly wearing the party down.
-  The final fight is **lost with the default tactics**, even at full HP: everyone piles onto the nearest enemy.
-  Switching damage dealers to *Lowest HP* (kill the Acolytes first) and Hyne to *HP below 75%* wins it
-  comfortably at full HP, and about half the time with the HP you typically arrive with.
+  The final fight is won with the default tactics: comfortably at full HP, narrowly (often with most of the party down)
+  at the HP you typically arrive with. Acolytes don't heal for now (see decisions log).
 
 ### M7 — Art & audio pass
 - Real sprites, tileset, UI skin, sounds and music.
@@ -170,10 +169,10 @@ More classes and characters can be found later in the game.
 | 2026-11-23 | Slice setting: the party is on its way to confront the mysterious stranger seen around Barrelsby, who coaxes townsfolk into the woods with promises of riches. |
 | 2026-11-23 | Defeat: retry from just before the last encounter started. |
 | 2026-11-23 | Art: Claude provides placeholders until the designer replaces them with real art (art is the main bottleneck). |
+| 2026-11-23 | The final fight should be winnable with the default tactics (there aren't enough tactics yet to demand more). Enemy Acolytes don't heal, for now. |
 
 ## Open questions for the designer
 
 1. **Progression** — are new Actions/Types unlocked over time (found, learned, bought), or all available from the start?
-2. **Story text** — everything in `src/data/story.ts` is placeholder writing. Rewrite freely; who is the Stranger?
-3. **Final fight difficulty** — see M6 notes; how hard should it be with the default tactics?
-4. **Escape** — should the party ever be able to flee a fight? *(parked for later)*
+2. **Story text** — everything in `src/data/story.ts` is placeholder writing; the designer will work on dialogue later. Who is the Stranger?
+3. **Escape** — should the party ever be able to flee a fight? *(parked for later)*

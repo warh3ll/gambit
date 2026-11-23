@@ -78,9 +78,9 @@ export const ENEMIES = {
     attackPower: 8,
     threat: 3,
     aggroRadius: 80,
-    actions: ['heal', 'attack'],
-    // The Stranger's followers: keep their side alive, otherwise pelt the party.
-    tactics: [row('heal', 'ally', 'hpBelow50'), row('attack', 'enemy', 'any')],
+    actions: ['attack'],
+    // The Stranger's followers. (Healing removed for now: the party doesn't have the tactics to deal with it yet.)
+    tactics: [row('attack', 'enemy', 'any')],
     color: 0x6a4a8a,
     size: { w: 12, h: 16 },
   },

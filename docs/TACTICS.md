@@ -116,8 +116,7 @@ speed, but have their own attack damage. Defined in [`src/data/enemies.ts`](../s
 | Bandit | 140 | Melee (13) | 1 | Attack | Enemy | Any |
 | Bandit Archer | 100 | Bow (11) | 1 | Attack | Enemy | HP below 50% |
 | | | | 2 | Attack | Enemy | Any |
-| Acolyte | 110 | Wand (8) | 1 | Heal | Any ally | HP below 50% |
-| | | | 2 | Attack | Enemy | Any |
+| Acolyte | 110 | Wand (8) | 1 | Attack | Enemy | Any |
 | The Stranger | 650 | Wand (12) | 1 | Shadow Bolt | Enemy | HP below 50% |
 | | | | 2 | Hex | Enemy | Highest HP |
 | | | | 3 | Shadow Bolt | Enemy | Any |
