@@ -222,6 +222,12 @@ next to the game tab. It saves straight into the project's data files, and the g
 - Paint tiles; place NPCs, exits, start points, enemies and story triggers; link them to events in the editor.
 - Areas move from `src/data/areas/*.ts` to editor-owned files, like events did.
 
+### E3 — Skill tree editor *(with M14)*
+- One tree per class, laid out tier by tier. Add nodes to a tier, link each node to the nodes it follows on the tier
+  before, and set what it does (new action, upgrade, stat boost, passive) and its minimum level.
+- Preview a route: click through picks and see which nodes open up next.
+- Saves `src/data/trees.json`. Problems list: nodes nothing leads to, empty tiers, unknown actions.
+
 ## Decisions log
 
 | Date | Decision |
@@ -277,6 +283,11 @@ next to the game tab. It saves straight into the project's data files, and the g
 | 2026-11-23 | Consumables can be used in combat through tactic rows, e.g. `Use Health Potion \| Any ally \| HP below 25%`. |
 | 2026-11-23 | Gold: enemies sometimes drop it, and quests and side quests give it. Items can be sold in shops. Enemies drop gold and consumables, not equipment. Unique enemies can have special loot that only drops from them. |
 | 2026-11-23 | The inventory is unlimited. There's only one stack per consumable, and a stack holds at most 20. |
+| 2026-11-23 | The game is a first part of a longer story (don't call it an "episode" to the player), about 4–5 hours max. Proposed level cap: 10. |
+| 2026-11-23 | Level-ups raise stats a little and give one progression point. |
+| 2026-11-23 | Progression trees are per class; each character picks their own route through their class's tree. |
+| 2026-11-23 | Respec: the first is free, later ones cost gold at a special NPC (to be decided). |
+| 2026-11-23 | Trees branch: pick one node per tier, and the next tier only offers that node's follow-ups. Kept simple. Trees must be buildable in the Gambit Editor (E3). |
 | 2026-11-23 | Character creation: the player picks name, class (any class) and look. None of it can be changed later. Whether creation comes before the intro or inside the story is open until the story is written. |
 | 2026-11-23 | M12 test character: Vesper, the Brigand (ranged damage), joining through an event. |
 | 2026-11-23 | M12 is on hold: the designer is building an editor in a separate branch/chat first. |

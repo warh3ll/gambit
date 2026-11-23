@@ -196,14 +196,20 @@ leave it, but can sit in the reserve like anyone else. Events can still have the
 14. XP per **character** (each levels on their own), or a **shared party level**?
     > **Answer:** Per character. Active party gets full XP, reserve (sidelines) gets 50%.
 15. A rough **level cap** for the full game (10? 20? 50?) and how long the game is meant to be?
+    > **Answer:** The game is a first part of a longer story, about **4–5 hours** at most. (Don't call it an "episode"
+    > to the player.)
+    >
+    > **Proposal:** level cap **10**. That's roughly one level every 25–30 minutes. Each level gives 1 point, so a
+    > character makes about 9 choices by the end. The cap is one number in a data file, easy to change after playtesting.
 16. Do stats grow automatically per level, or only through the progression tree?
+    > **Answer:** Both. Each level-up raises HP and attack a little **and** gives one progression point.
 
 ---
 
 ## 5. Progression trees
 
 **Proposal**
-- Each character has their own **tree** (or a tree per class), spending the points from levelling. Kinds of node:
+- Each **class** has a **tree** (Q17), and each character spends the points from levelling in it. Kinds of node:
   - **New action**: e.g. Hyne learns *Group Heal*. This is how new tactic Actions are unlocked.
   - **Upgrade an action**: more damage, shorter cooldown, longer duration, an extra effect (Firebolt burns).
   - **Stat boost**: max HP, attack, speed.
@@ -211,16 +217,34 @@ leave it, but can sit in the reserve like anyone else. Events can still have the
   - ~~**More tactic rows**~~ — not part of trees (see answer to 19–20).
 - Nodes have prerequisites (a tree, not a flat list) and maybe a minimum level.
 - Tree screen (from the party manager or a key): nodes as icons, click to unlock, hover for details.
-- Trees are data files, `src/data/progression/<character>.ts`: nodes, costs, links, effects.
+- Trees are data made with the Gambit Editor (one tree per class): nodes, links, effects. See M14 notes below.
 
 **Questions**
 17. Tree per **character** (Hyne's tree is Hyne's) or per **class** (if another Cleric joins later, same tree)?
+    > **Answer:** **Per class.** There won't be many characters of the same class, so each one feels special. But
+    > the main character can pick any class, so trees belong to the class.
 18. Can points be **refunded / respec'd**? Free, at a cost, or never?
+    > **Answer:** The **first respec is free**. After that it **costs gold**, at a special NPC (to be decided).
 19. **Tactic Types** (*HP below 50%*, *Targeting me*…): unlocked in trees too, found in the world, or all available from the start?
 20. Tactic **rows**: start with all 10, or unlock them over time?
     > **Answer (19–20):** Trees let each character **learn new skills or upgrade existing ones** — they do **not**
     > unlock tactic Types or Targets. **All Types, Targets and all 10 rows are available from the start.**
 21. Should a tree branch so two players' Hynes can play differently (pick A *or* B), or is it a path everyone completes eventually?
+    > **Answer:** **It branches**, and the player actively chooses a route. Two characters of the same class (e.g.
+    > Hyne and a Cleric main character) can go different routes. The tree stays simple. Example: on the first level
+    > you choose B (not A, C or D). On the next level you choose from B's follow-ups E, F or G, not from what follows
+    > the others. **Building the trees in the Gambit Editor is a must.**
+
+**What this means for the build (M14)**
+- A class tree is a set of **levels (tiers)**. Each node on a tier lists which nodes on the tier before lead to it.
+  A character picks **one node per tier**, and only from the nodes their previous pick leads to.
+- Each character stores their own picks, so two Clerics share the tree but have their own route.
+- A tier unlocks when the character has a point to spend. With 1 point per level and a cap of 10, that's up to 9 tiers.
+  (Some tiers could also need a minimum level.)
+- **Respec:** clears a character's picks and gives the points back. The first respec is free; after that it costs gold
+  at a respec NPC (who and where is decided later). The save tracks whether the free respec has been used, per character.
+- Trees are stored as a JSON file made with the Gambit Editor (`src/data/trees.json`), like events.
+  See **E3 — Skill tree editor** in PLAN.md.
 
 ---
 
