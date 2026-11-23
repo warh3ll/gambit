@@ -147,9 +147,35 @@ arthurLeaves: [
     >
     > **Main character:** the player will **create** the main character when a new game starts (later). Like anyone else,
     > they can be left out of the active party. "In the background" means certain events can still have them speak in
-    > dialogue even when they aren't in the active party. *(Assumed, to confirm: the story never removes them from the roster.)*
+    > dialogue even when they aren't in the active party. The story never removes them from the roster.
 
 **Test character for M12:** **Vesper, the Brigand** — ranged damage. Joins through an event, to test swapping.
+
+---
+
+## 3b. Character creation (the main character)
+
+The player creates the main character when a new game starts. They're part of the roster from the start and never
+leave it, but can sit in the reserve like anyone else. Events can still have them speak when they aren't in the party.
+
+**Proposal**
+- **New game → creation screen → intro.** The screen is skipped on Continue.
+- The player picks:
+  - a **name** (with a random/default suggestion);
+  - a **class** from a short list (each with its weapon, starting skills and default tactics);
+  - a **look**: a choice of portraits/sprites per class (placeholders until art exists).
+- Saved in the save game as the main character's entry, under the fixed id **`hero`**.
+- **In dialogue:** the speaker `hero` always works, in or out of the party, and shows the chosen name and headshot.
+  Dialogue text can use **`{hero}`** to insert the chosen name (e.g. "Thank you, {hero}."). The Gambit Editor offers
+  `hero` in the speaker list.
+- Until this milestone is built, `hero` is a fixed placeholder character, so events can already be written with it.
+
+**Questions**
+27. What does the player choose — **name, class, look**? Anything else (e.g. a background or origin that changes some
+    dialogue, pronouns)?
+28. Are the main character's **classes** the same ones other party members have, or their own set?
+29. Can the **name** (or look) be changed later in the game?
+30. Is the creation screen **before** the intro, or part of it (e.g. someone in the story asks for your name)?
 
 ---
 
@@ -244,6 +270,7 @@ Each step ends with something playable, like the milestones so far.
 | M14 | **Progression trees** (one full tree as the example, the rest as stubs) | Needs XP; adds new tactic Actions. |
 | M15 | **Inventory & equipment** (bag, slots, consumables, gold) | Quest rewards and shops need it. |
 | M16 | **Quests & town services** (quest log, shop, inn, recruiting) | Built on events, roster and inventory. |
+| M17 | **Character creation** (name, class, look; `hero` speaker and `{hero}` in text) | Needs the roster; classes are fuller once trees exist. The `hero` placeholder comes in M12 so events can use it already. |
 
 The boilerplate for each system comes with placeholder content: two areas, an NPC, an event where someone joins and
 someone leaves, a sixth character to swap in, and one tree filled out. You replace that content with the real thing.

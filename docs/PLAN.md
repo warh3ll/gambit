@@ -151,8 +151,8 @@ More classes and characters can be found later in the game.
 ## Next: game systems
 
 Plans and questions for the full game's systems are in [SYSTEMS.md](SYSTEMS.md): game state & saving,
-areas & travel, event scripting, party roster & manager, XP & levels, progression trees.
-Proposed milestones **M9–M16** are listed there. **M12 is on hold** until the designer's editor work is done.
+areas & travel, event scripting, party roster & manager, character creation, XP & levels, progression trees.
+Proposed milestones **M9–M17** are listed there. **M12 is on hold** until the designer's editor work is done.
 
 ### M9 — Game state & saving ✅ *(branch `feature/game-state`)*
 - One save game holding everything that changes: area + position, leader, story flags, beaten encounters,
@@ -271,7 +271,8 @@ next to the game tab. It saves straight into the project's data files, and the g
 | 2026-11-23 | Active party: max 5. Some story sections have fewer characters (especially early on), sometimes just one. |
 | 2026-11-23 | Characters who leave and later return keep their level, tactics and progress. |
 | 2026-11-23 | The story doesn't depend on who is in the active party (no leader lock). The main character stays in the background even when not in the active party. |
-| 2026-11-23 | The player creates the main character at the start of a new game (later). They can be left out of the active party, but some events still have them speak in dialogue. |
+| 2026-11-23 | The player creates the main character at the start of a new game (later). They can be left out of the active party, but some events still have them speak in dialogue. The story never removes them from the roster. |
+| 2026-11-23 | Character creation is planned as M17 (SYSTEMS.md §3b). A placeholder main character (`hero`) comes with M12 so events can use them already. |
 | 2026-11-23 | M12 test character: Vesper, the Brigand (ranged damage), joining through an event. |
 | 2026-11-23 | M12 is on hold: the designer is building an editor in a separate branch/chat first. |
 | 2026-11-23 | World building happens in our own visual editor (the Gambit Editor, in the dev server) rather than external tools: event & dialogue editor first (E1), then a map painter (E2). |
