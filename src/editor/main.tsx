@@ -36,12 +36,12 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'npcs', label: 'NPCs' },
   { id: 'speakers', label: 'Speakers' },
   { id: 'map', label: 'Map' },
-  { id: 'trees', label: 'Trees' },
+  { id: 'trees', label: 'Classes' },
 ];
 
 /** The area last open on the Map tab, to return to it. */
 let lastArea: string | null = null;
-/** The class last open on the Trees tab. */
+/** The class last open on the Classes tab. */
 let lastClass: string | null = null;
 
 function App() {

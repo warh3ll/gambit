@@ -1,4 +1,4 @@
-/** The Trees tab: the list of classes, the tree (tiers left to right), and the panel on the right. */
+/** The Classes tab: the list of classes, the tree (tiers left to right), and the panel on the right. */
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { ACTIONS } from '../../data/tactics';
 import { type ClassTree, type CharacterStat, LEVEL_CAP, type TreeEffect, type TreeNode, type UpgradeStat, tierLevel } from '../../data/trees';

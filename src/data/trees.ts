@@ -2,7 +2,7 @@
  * PROGRESSION TREES — one skill tree per class.
  *
  * The content lives in trees.json, next to this file. Edit it with the Gambit Editor:
- * run `npm run dev` and open http://localhost:8080/editor.html (Trees tab).
+ * run `npm run dev` and open http://localhost:8080/editor.html (Classes tab).
  *
  * A tree is a list of tiers. On each level-up a character gets one point and picks one node on the next tier,
  * but only a node that follows the node they picked on the tier before. Tier 1 opens at level 2, tier 2 at

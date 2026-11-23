@@ -45,7 +45,7 @@ refining those tactics.
 | `src/systems/EventRunner.ts` | Runs event steps one after another |
 | `src/data/areas/` | **Areas**: one JSON file per area (the file name is the area's id), made in the Gambit Editor's Map tab; `index.ts` loads them all |
 | `src/data/npcs.json` | **NPCs**: name, look, conversation. Made in the Gambit Editor; `npcs.ts` loads it |
-| `src/data/trees.json` | **Skill trees**, one per class, and new actions planned in them. Made in the Gambit Editor (Trees tab); `trees.ts` has the shape |
+| `src/data/trees.json` | **Skill trees**, one per class, and new actions planned in them. Made in the Gambit Editor (Classes tab); `trees.ts` has the shape |
 | `src/data/art.ts` | **Replacing placeholder art**: list real PNGs here, key → file in `public/art/` |
 | `src/systems/TacticEngine.ts` | Picks which tactic row fires (top to bottom, first match) |
 | `src/systems/Pathfinder.ts` | A* pathfinding on the tile grid + path smoothing |
@@ -245,7 +245,7 @@ next to the game tab. It saves straight into the project's data files, and the g
   just where stepping leads away, so paint a door (or anything) under it. Existing saves keep working (no change).
 
 ### E3 — Skill tree editor ✅ *(branch `feature/skill-tree-editor`; the game uses trees from M14)*
-- **Trees tab**: one tree per class (the party's classes, plus "+ New class tree" for a class nobody has yet).
+- **Classes tab**: one tree per class (the party's classes, plus "+ New class tree" for a class nobody has yet).
   Tiers run left to right, each labelled with the level it opens at (tier 1 at level 2, tier 2 at level 3, …).
 - **Nodes**: "+ Add node" under a tier, "+ Add tier" at the end. Click a node to edit its name, the text the player
   reads, a minimum level, which nodes it follows, and its **effects**: learn an action, upgrade an action (power,
