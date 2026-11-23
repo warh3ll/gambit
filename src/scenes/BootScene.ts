@@ -109,7 +109,7 @@ export class BootScene extends Phaser.Scene {
 
     this.makeTileset(g);
     g.destroy();
-    this.scene.start('World');
+    this.scene.start('Title');
   }
 
   /** Draws all map tiles side by side into one 'tiles' texture. */

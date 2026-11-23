@@ -3,6 +3,7 @@ import { TILE_SIZE } from '../config';
 import { ENEMIES } from '../data/enemies';
 import { BARRELSBY_ROAD } from '../data/maps/barrelsbyRoad';
 import { ENDING, INTRO, type Line, TRIGGERS } from '../data/story';
+import { session } from '../game/session';
 import { CombatManager, type CombatResult } from '../systems/CombatManager';
 import { CombatSystem } from '../systems/CombatSystem';
 import { Pathfinder, type Point } from '../systems/Pathfinder';
@@ -13,6 +14,9 @@ import { Party } from '../world/Party';
 import { isBlocking } from '../world/tiles';
 import type { DialogData } from './DialogScene';
 import type { UIScene } from './UIScene';
+
+/** The area this scene shows. (Only one area until M10.) */
+const AREA_ID = 'barrelsbyRoad';
 
 /** How often (seconds) the leader's position is remembered, for retry checkpoints. */
 const TRAIL_INTERVAL = 0.25;
@@ -41,9 +45,10 @@ export class WorldScene extends Phaser.Scene {
   private trailTimer = 0;
   /** Where (and with what HP) the party retries after a defeat. */
   private checkpoint!: Checkpoint;
-  private playedTriggers = new Set<string>();
   /** Clicks are ignored until this time (ms), so the click that closes an overlay doesn't move the party. */
   private ignoreClicksUntil = 0;
+  /** The slice's ending has played. */
+  private ended = false;
 
   constructor() {
     super('World');
@@ -60,12 +65,11 @@ export class WorldScene extends Phaser.Scene {
     this.pathfinder = new Pathfinder(width, height, TILE_SIZE, (tx, ty) => !isBlocking(tiles[ty][tx]));
     const spawn = this.pathfinder.tileCenter(this.map.spawn.x, this.map.spawn.y);
     this.party = new Party(this, this.pathfinder, spawn);
-    this.party.face(0); // face east, down the road
-    this.party.placeAt(spawn);
     this.enemies = this.spawnEncounters();
+    const start = this.applySave(spawn);
     this.combat = new CombatManager(this.party, this.enemies);
     this.combatSystem = new CombatSystem(this, this.pathfinder);
-    this.checkpoint = { pos: spawn, hp: this.party.snapshotHp() };
+    this.checkpoint = { pos: start, hp: this.party.snapshotHp() };
     this.combat.on('combatStart', () => this.saveCheckpoint());
     this.combat.on('combatEnd', (result: CombatResult, fought: Enemy[]) => this.onCombatEnd(result, fought));
 
@@ -76,7 +80,10 @@ export class WorldScene extends Phaser.Scene {
     const cam = this.cameras.main;
     cam.setBounds(0, 0, width * TILE_SIZE, height * TILE_SIZE);
     cam.startFollow(this.party.leader.sprite, true, 0.12, 0.12);
-    this.party.on('leaderChanged', () => cam.startFollow(this.party.leader.sprite, true, 0.12, 0.12));
+    this.party.on('leaderChanged', () => {
+      cam.startFollow(this.party.leader.sprite, true, 0.12, 0.12);
+      if (!this.combat.inCombat) this.saveGame();
+    });
 
     this.input.mouse?.disableContextMenu();
     this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.onClick(pointer));
@@ -90,8 +97,53 @@ export class WorldScene extends Phaser.Scene {
       this.input.keyboard?.on('keydown-J', () => this.jumpToNextFight());
     }
 
+    // Save when the tab is hidden or closed, unless mid-fight or mid-dialogue (then the last autosave stands).
+    const onHide = () => {
+      if (document.visibilityState === 'hidden' && !this.combat.inCombat && !this.scene.isPaused()) this.saveGame();
+    };
+    document.addEventListener('visibilitychange', onHide);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => document.removeEventListener('visibilitychange', onHide));
+
     this.scene.launch('UI', { party: this.party, combat: this.combat });
-    this.time.delayedCall(400, () => this.playStory(INTRO));
+    if (!session.flag('introPlayed')) {
+      this.time.delayedCall(400, () => this.playStory(INTRO, () => session.setFlag('introPlayed')));
+    }
+  }
+
+  // ── saving ──
+
+  /** Puts the saved game into the world. Returns where the party starts. */
+  private applySave(spawn: Point): Point {
+    const save = session.data;
+    for (const m of this.party.members) {
+      const saved = save.members[m.id];
+      if (!saved) continue;
+      m.hp = Math.max(1, Math.min(m.maxHp, saved.hp));
+      m.tactics = saved.tactics.map((r) => ({ ...r }));
+    }
+    this.party.setLeader(save.leaderId);
+    for (const e of this.enemies) if (save.beaten.includes(`${AREA_ID}/${e.groupId}`)) e.despawn();
+
+    const start = save.area === AREA_ID && save.position ? save.position : spawn;
+    this.party.face(0); // face east, down the road
+    this.party.placeAt(start);
+    return start;
+  }
+
+  /** Copies the world into the save and writes it (autosave). */
+  private saveGame() {
+    const save = session.data;
+    const l = this.party.leader;
+    save.area = AREA_ID;
+    save.position = { x: Math.round(l.x), y: Math.round(l.y) };
+    save.leaderId = l.id;
+    for (const m of this.party.members) {
+      const saved = save.members[m.id];
+      if (!saved) continue;
+      saved.hp = m.hp;
+      saved.tactics = m.tactics.map((r) => ({ ...r }));
+    }
+    session.autosave();
   }
 
   update(_time: number, deltaMs: number) {
@@ -123,26 +175,33 @@ export class WorldScene extends Phaser.Scene {
     this.scene.launch('Tactics', { party: this.party });
   }
 
-  /** Shows story lines; the world pauses until they're read. */
+  /** Shows story lines; the world pauses until they're read. Autosaves afterwards. */
   private playStory(lines: Line[], onDone?: () => void) {
-    if (!lines.length) {
+    const done = () => {
       onDone?.();
+      if (!this.combat.inCombat && !this.ended) this.saveGame();
+    };
+    if (!lines.length) {
+      done();
       return;
     }
     this.scene.pause();
     this.scene.pause('UI');
-    this.scene.launch('Dialog', { lines, onDone } satisfies DialogData);
+    this.scene.launch('Dialog', { lines, onDone: done } satisfies DialogData);
   }
 
   /** Plays a story trigger when the leader steps on one. Returns true if one started. */
   private checkTriggers(): boolean {
     const l = this.party.leader;
     const digit = this.map.triggers.get(`${Math.floor(l.x / TILE_SIZE)},${Math.floor(l.y / TILE_SIZE)}`);
-    if (!digit || this.playedTriggers.has(digit)) return false;
-    this.playedTriggers.add(digit);
+    const flag = `trigger.${AREA_ID}.${digit}`;
+    if (!digit || session.flag(flag)) return false;
     const trigger = TRIGGERS[digit];
     if (!trigger?.lines.length) return false;
-    this.playStory(trigger.lines, trigger.startsFight ? () => this.nearestGroupAttacks() : undefined);
+    this.playStory(trigger.lines, () => {
+      session.setFlag(flag); // only once read, so reloading mid-dialogue plays it again
+      if (trigger.startsFight) this.nearestGroupAttacks();
+    });
     return true;
   }
 
@@ -175,14 +234,23 @@ export class WorldScene extends Phaser.Scene {
       this.party.restore(c, this.checkpoint.hp, facing);
       this.trail = [{ ...this.checkpoint.pos }];
       this.cameras.main.fadeIn(800, 13, 11, 20);
+      this.saveGame();
       return;
     }
+    for (const groupId of new Set(fought.map((e) => e.groupId))) {
+      const id = `${AREA_ID}/${groupId}`;
+      if (!session.data.beaten.includes(id)) session.data.beaten.push(id);
+    }
+    this.saveGame();
     if (fought.some((e) => e.def.id === 'stranger')) {
       this.time.delayedCall(1500, () => this.playStory(ENDING, () => this.finish()));
     }
   }
 
   private finish() {
+    this.ended = true;
+    session.setFlag('sliceComplete');
+    this.saveGame();
     this.scene.pause();
     this.scene.pause('UI');
     this.scene.launch('End');

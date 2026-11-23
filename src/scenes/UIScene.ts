@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { session } from '../game/session';
 import type { CombatManager, CombatResult } from '../systems/CombatManager';
 import { textStyle, pixelCamera, type ViewSize } from '../view';
 import type { Party } from '../world/Party';
@@ -26,6 +27,7 @@ export class UIScene extends Phaser.Scene {
   private nameLabel!: Phaser.GameObjects.Text;
   private banner!: Phaser.GameObjects.Text;
   private hint!: Phaser.GameObjects.Text;
+  private savedNote!: Phaser.GameObjects.Text;
 
   constructor() {
     super('UI');
@@ -57,11 +59,15 @@ export class UIScene extends Phaser.Scene {
       .setOrigin(0.5, 0)
       .setVisible(false);
 
+    this.savedNote = this.add.text(0, 0, 'Saved', textStyle(10, '#8a82a0')).setOrigin(1, 1).setAlpha(0);
+
     this.party.on('leaderChanged', this.refreshLeader, this);
+    session.on('saved', this.showSaved, this);
     this.combat.on('combatStart', this.onCombatStart, this);
     this.combat.on('combatEnd', this.onCombatEnd, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.party.off('leaderChanged', this.refreshLeader, this);
+      session.off('saved', this.showSaved, this);
       this.combat.off('combatStart', this.onCombatStart, this);
       this.combat.off('combatEnd', this.onCombatEnd, this);
     });
@@ -99,6 +105,14 @@ export class UIScene extends Phaser.Scene {
     this.nameLabel.setY(y - 3);
     this.hint.setPosition(MARGIN + width + 8, view.height - MARGIN);
     this.banner.setX(view.width / 2);
+    this.savedNote.setPosition(view.width - MARGIN, view.height - MARGIN);
+  }
+
+  /** Small fading "Saved" note in the corner after each autosave. */
+  private showSaved() {
+    this.tweens.killTweensOf(this.savedNote);
+    this.savedNote.setAlpha(1);
+    this.tweens.add({ targets: this.savedNote, alpha: 0, delay: 900, duration: 600 });
   }
 
   private onCombatStart() {

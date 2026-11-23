@@ -41,6 +41,15 @@ export class Enemy extends Unit {
     this.revive(this.maxHp);
   }
 
+  /** Removes an enemy that was already beaten (e.g. in a saved game) without the death animation. */
+  despawn() {
+    this.stop();
+    this.hp = 0;
+    this.sprite.setVisible(false);
+    this.shadow.setVisible(false);
+    this.sync();
+  }
+
   protected die() {
     super.die();
     this.sprite.scene.time.delayedCall(450, () => {

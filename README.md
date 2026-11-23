@@ -23,6 +23,8 @@ npm run preview   # serve the production build
 | T | Open / close the tactics editor (pauses the game). Edits are saved in the browser. |
 | Click / Space / Enter | Next line of dialogue |
 
+The game autosaves (one save, in the browser). The title screen offers *Continue* or *New game*.
+
 ## Debug keys (dev server only, not in the built game)
 
 | Key | Effect |

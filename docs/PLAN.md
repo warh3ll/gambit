@@ -49,7 +49,8 @@ refining those tactics.
 | `src/systems/CombatManager.ts` | Starts fights on proximity, pulls in groups, ends fights |
 | `src/systems/CombatSystem.ts` | Runs tactics: picks rows, walks into range, performs actions, projectiles |
 | `src/systems/CombatText.ts` | Floating combat text: damage, heals, buff/debuff names |
-| `src/game/tacticsStore.ts` | Saves edited tactics in the browser (localStorage) |
+| `src/game/save.ts` | **The save game**: what's saved, versioning/migration, loading and writing (localStorage) |
+| `src/game/session.ts` | The game being played: current save data, story flags, autosave |
 | `src/world/` | Units (party members, enemies), party formation, tiles, ASCII map loader |
 | `src/scenes/` | Phaser scenes: Boot (art), World (map, movement, story triggers, retry), UI (HUD), Tactics (editor), Dialog, End |
 | `src/view.ts` | Full-window pixel camera (whole-number zoom), UI font and text style |
@@ -144,7 +145,18 @@ More classes and characters can be found later in the game.
 
 Plans and questions for the full game's systems are in [SYSTEMS.md](SYSTEMS.md): game state & saving,
 areas & travel, event scripting, party roster & manager, XP & levels, progression trees.
-Proposed milestones **M9–M14** are listed there; they start once the designer has answered the questions.
+Proposed milestones **M9–M14** are listed there.
+
+### M9 — Game state & saving ✅ *(branch `feature/game-state`)*
+- One save game holding everything that changes: area + position, leader, story flags, beaten encounters,
+  and per character: unlocked / in party, HP, XP + level (unused until M13), tactics.
+- **Autosave** after every fight (won or lost), after story dialogue, when tactics are edited, when the leader changes,
+  and when the browser tab is hidden or closed (unless mid-fight or mid-dialogue). A small "Saved" note shows in the corner.
+- **Title screen**: *Continue* (if there's a save) and *New game* (asks before erasing the save).
+  The end screen now goes back to the title.
+- Saves are versioned so older saves keep working as the game grows. Tactics saved by M5 carry over into a new game.
+- *Note:* beaten encounters are remembered by their group number on the map; editing the map (adding/removing
+  enemy groups) can shift which groups an existing save thinks are beaten. Start a new game after big map edits.
 
 ## Decisions log
 
@@ -181,6 +193,8 @@ Proposed milestones **M9–M14** are listed there; they start once the designer 
 | 2026-11-23 | The main story follows one path (no branching); there will be side quests. |
 | 2026-11-23 | XP is per character: the active party gets full XP from a fight, characters on the sidelines get 50%. |
 | 2026-11-23 | Progression trees teach new skills or upgrade existing ones per character. They don't unlock tactic Types or Targets. |
+| 2026-11-23 | All tactic Types, Targets and all 10 rows are available from the start. |
+| 2026-11-23 | Saving: autosave, one save. Title screen with Continue / New game. |
 
 ## Open questions for the designer
 

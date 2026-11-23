@@ -4,6 +4,7 @@ import { BootScene } from './scenes/BootScene';
 import { DialogScene } from './scenes/DialogScene';
 import { EndScene } from './scenes/EndScene';
 import { TacticsScene } from './scenes/TacticsScene';
+import { TitleScene } from './scenes/TitleScene';
 import { UIScene } from './scenes/UIScene';
 import { WorldScene } from './scenes/WorldScene';
 
@@ -20,7 +21,7 @@ function start() {
       width: window.innerWidth,
       height: window.innerHeight,
     },
-    scene: [BootScene, WorldScene, UIScene, TacticsScene, DialogScene, EndScene],
+    scene: [BootScene, TitleScene, WorldScene, UIScene, TacticsScene, DialogScene, EndScene],
   });
 
   // Dev builds only: expose the game for debugging in the browser console / automated tests.

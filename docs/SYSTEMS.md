@@ -11,7 +11,7 @@ All of them share one foundation: a **game state** that is saved and loaded. Tha
 
 ---
 
-## 0. Foundation: game state & saving
+## 0. Foundation: game state & saving — ✅ built in M9
 
 **Proposal**
 - One saved "game state" holds everything that changes during play:
@@ -24,8 +24,11 @@ All of them share one foundation: a **game state** that is saved and loaded. Tha
 
 **Questions**
 1. Saving: **autosave** (e.g. after every fight and area change), **save points** in the world, or both?
+   > **Answer:** Autosave.
 2. One save, or several **save slots**?
+   > **Answer:** One save.
 3. A title screen with *Continue / New game*?
+   > Going with yes (simple, fits a single save).
 
 ---
 
@@ -168,7 +171,7 @@ arthurLeaves: [
 19. **Tactic Types** (*HP below 50%*, *Targeting me*…): unlocked in trees too, found in the world, or all available from the start?
 20. Tactic **rows**: start with all 10, or unlock them over time?
     > **Answer (19–20):** Trees let each character **learn new skills or upgrade existing ones** — they do **not**
-    > unlock tactic Types or Targets. *(Still open: are all Types/Targets and all 10 rows available from the start?)*
+    > unlock tactic Types or Targets. **All Types, Targets and all 10 rows are available from the start.**
 21. Should a tree branch so two players' Hynes can play differently (pick A *or* B), or is it a path everyone completes eventually?
 
 ---
@@ -179,7 +182,7 @@ Each step ends with something playable, like the milestones so far.
 
 | # | Milestone | Why this order |
 |---|---|---|
-| M9 | **Game state & saving** | Everything else stores its data here. |
+| M9 ✅ | **Game state & saving** | Everything else stores its data here. |
 | M10 | **Areas & travel** (2 areas from the slice + exits, NPC you can click) | The world everything else happens in. |
 | M11 | **Event scripting** (steps, triggers, flags, choices) | Story drives party changes and unlocks. |
 | M12 | **Roster & party manager** (join/leave from events, P screen) | Needs events to add/remove members. |

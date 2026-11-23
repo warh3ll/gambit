@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { END_SCREEN } from '../data/story';
 import { pixelCamera, sharpenText, textStyle, type ViewSize } from '../view';
 
-/** Shown when the slice is finished. "Play again" restarts the game (saved tactics are kept). */
+/** Shown when the slice is finished. "Back to title" reloads the game to the title screen. */
 export class EndScene extends Phaser.Scene {
   private layer!: Phaser.GameObjects.Container;
 
@@ -27,7 +27,7 @@ export class EndScene extends Phaser.Scene {
         .text(cx, cy - 4, END_SCREEN.text, textStyle(10, '#d8d0e8', { align: 'center', wordWrap: { width: Math.min(view.width - 32, 300) } }))
         .setOrigin(0.5, 0),
     );
-    const again = this.add.text(cx, cy + 34, '[ Play again ]', textStyle(10, '#ffffff')).setOrigin(0.5);
+    const again = this.add.text(cx, cy + 34, '[ Back to title ]', textStyle(10, '#ffffff')).setOrigin(0.5);
     again.setInteractive({ useHandCursor: true }).on('pointerdown', () => window.location.reload());
     again.on('pointerover', () => again.setColor('#f2d16b')).on('pointerout', () => again.setColor('#ffffff'));
     this.layer.add(again);

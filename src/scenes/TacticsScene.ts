@@ -9,7 +9,7 @@ import {
   TYPES,
   type TypeId,
 } from '../data/tactics';
-import { saveTactics } from '../game/tacticsStore';
+import { session } from '../game/session';
 import { pixelCamera, sharpenText, textStyle, type ViewSize } from '../view';
 import type { Party } from '../world/Party';
 import type { PartyMember } from '../world/PartyMember';
@@ -449,7 +449,9 @@ export class TacticsScene extends Phaser.Scene {
   /** Something was edited: save, and rebuild on the next frame (not inside the click handler that caused it). */
   private changed() {
     this.member.thinkTimer = 0;
-    saveTactics(this.party.members);
+    const saved = session.data.members[this.member.id];
+    if (saved) saved.tactics = this.member.tactics.map((r) => ({ ...r }));
+    session.autosave();
     this.dirty = true;
   }
 
