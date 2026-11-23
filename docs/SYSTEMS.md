@@ -53,7 +53,7 @@ All of them share one foundation: a **game state** that is saved and loaded. Tha
    > **Answer:** All of those, plus picking up side quests.
 6. Can areas be revisited, and do enemies **respawn** (e.g. for grinding XP), or is every fight a one-off?
    > **Answer:** Enemies **respawn on transition**: go into a house and back out, and they're back.
-   > *(Claude's assumption, to confirm: story/boss fights such as the Stranger are marked **unique** and stay beaten.)*
+   > Story/boss fights (e.g. the Stranger) are marked **unique** and stay beaten. *(confirmed)*
 
 ---
 

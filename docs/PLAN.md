@@ -167,6 +167,8 @@ Proposed milestones **M9–M16** are listed there.
 - **NPCs** (`src/data/npcs.ts`): click one and the leader walks up and talks. Until M11 they just say their lines.
 - **Respawn**: every time an area loads, its enemies are back. Groups marked `unique` (the Stranger) stay beaten.
 - Small areas (houses) are centred on screen with a dark surround.
+- **Hover highlight**: NPCs get a 1px gold outline (traced from the sprite, so it works with real art too) and doors
+  a gold border, plus a hand cursor. Hidden during fights.
 - Placeholder content: **Marta's House** in Barrelsby (door on one of the houses), Old Marta inside,
   a Worried Villager by the road.
 - Story triggers are now named (`forestEdge`, `meetStranger`) instead of numbered; old saves are upgraded (save v2).
@@ -213,7 +215,8 @@ Proposed milestones **M9–M16** are listed there.
 | 2026-11-23 | Enemies respawn on area transitions (go into a house and out again: they're back). |
 | 2026-11-23 | Side quests have a quest log. Rewards vary per quest: XP, new characters, items. |
 | 2026-11-23 | Plan an inventory system for equipment and consumables (SYSTEMS.md §6). |
-| 2026-11-23 | *(Claude's assumption, to confirm)* Story/boss fights are marked unique and don't respawn. |
+| 2026-11-23 | Story/boss fights are marked unique and don't respawn. |
+| 2026-11-23 | Interactive things (NPCs, doors) get a highlight border on mouse hover. |
 
 ## Open questions for the designer
 

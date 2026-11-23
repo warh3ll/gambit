@@ -12,6 +12,7 @@ import { Pathfinder, type Point } from '../systems/Pathfinder';
 import { pixelCamera, type ViewSize } from '../view';
 import { Enemy } from '../world/Enemy';
 import { type LoadedMap, loadMap } from '../world/mapLoader';
+import { drawTileBorder } from '../world/highlight';
 import { Npc } from '../world/Npc';
 import { Party } from '../world/Party';
 import { isBlocking } from '../world/tiles';
@@ -58,6 +59,10 @@ export class WorldScene extends Phaser.Scene {
   private enemies: Enemy[] = [];
   private leaderMarker!: Phaser.GameObjects.Image;
   private aggroDebug!: Phaser.GameObjects.Graphics;
+  /** Border drawn around the exit (door) under the mouse. */
+  private exitHover!: Phaser.GameObjects.Graphics;
+  private hoveredExit: string | null = null;
+  private npcs: Npc[] = [];
 
   /** Recent leader positions, newest last. */
   private trail: Point[] = [];
@@ -97,11 +102,11 @@ export class WorldScene extends Phaser.Scene {
     const spawn = this.pathfinder.tileCenter(startTile.x, startTile.y);
     this.party = new Party(this, this.pathfinder, spawn);
     this.enemies = this.spawnEncounters();
-    this.map.npcs.forEach((n) => {
+    this.npcs = this.map.npcs.map((n) => {
       const def = NPCS[n.id];
       if (!def) throw new Error(`${this.area.id}: unknown NPC "${n.id}"`);
       const p = this.pathfinder.tileCenter(n.x, n.y);
-      new Npc(this, def, p.x, p.y);
+      return new Npc(this, def, p.x, p.y);
     });
     const start = this.applySave(spawn);
     this.combat = new CombatManager(this.party, this.enemies);
@@ -112,6 +117,8 @@ export class WorldScene extends Phaser.Scene {
 
     this.leaderMarker = this.add.image(0, 0, 'leader-marker').setDepth(10_000);
     this.aggroDebug = this.add.graphics().setDepth(2).setVisible(false);
+    this.exitHover = this.add.graphics().setDepth(3);
+    this.hoveredExit = null;
 
     const cam = this.cameras.main;
     if (this.area.kind !== 'outdoor') cam.setBackgroundColor('#0d0b14');
@@ -142,7 +149,10 @@ export class WorldScene extends Phaser.Scene {
       if (document.visibilityState === 'hidden' && !this.combat.inCombat && !this.scene.isPaused()) this.saveGame();
     };
     document.addEventListener('visibilitychange', onHide);
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => document.removeEventListener('visibilitychange', onHide));
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      document.removeEventListener('visibilitychange', onHide);
+      this.input.setDefaultCursor('default');
+    });
 
     this.scene.launch('UI', { party: this.party, combat: this.combat, areaName: this.area.name });
     if (this.entry) this.saveGame(); // arrived through an exit: save the new area
@@ -226,6 +236,7 @@ export class WorldScene extends Phaser.Scene {
 
     const s = this.party.leader.sprite;
     this.leaderMarker.setPosition(s.x, s.y - s.height - 4);
+    this.updateExitHover();
     if (this.aggroDebug.visible) this.drawAggroRanges();
   }
 
@@ -286,6 +297,48 @@ export class WorldScene extends Phaser.Scene {
     return true;
   }
 
+  /** Highlights the door (exit) under the mouse, with a hand cursor. Hidden during fights. */
+  private updateExitHover() {
+    const pointer = this.input.activePointer;
+    const ui = this.scene.get('UI') as UIScene;
+    let key: string | null = null;
+    if (!this.combat.inCombat && !this.transitioning && !ui.isOverUI(pointer)) {
+      const p = pointer.positionToCamera(this.cameras.main) as Phaser.Math.Vector2;
+      const k = tileKey(p);
+      if (this.map.exits.has(k)) key = k;
+    }
+    if (this.combat.inCombat) for (const n of this.npcs) n.setHighlight(false);
+    const hand = key !== null || this.npcs.some((n) => n.highlighted);
+    const cursor = hand ? 'pointer' : 'default';
+    if (this.input.manager.defaultCursor !== cursor) this.input.setDefaultCursor(cursor);
+    if (key === this.hoveredExit) return;
+    this.hoveredExit = key;
+    this.exitHover.clear();
+    if (key) drawTileBorder(this.exitHover, this.connectedExitTiles(key), TILE_SIZE);
+  }
+
+  /** The exit tiles that belong together with `key` (touching, same destination), e.g. a double door. */
+  private connectedExitTiles(key: string): { x: number; y: number }[] {
+    const target = this.map.exits.get(key);
+    const out: { x: number; y: number }[] = [];
+    const seen = new Set<string>([key]);
+    const queue = [key];
+    while (queue.length) {
+      const k = queue.shift()!;
+      const [x, y] = k.split(',').map(Number);
+      out.push({ x, y });
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const n = `${x + dx},${y + dy}`;
+        const e = this.map.exits.get(n);
+        if (!seen.has(n) && e && e.to === target?.to && e.at === target?.at) {
+          seen.add(n);
+          queue.push(n);
+        }
+      }
+    }
+    return out;
+  }
+
   private talkTo(npc: Npc) {
     this.talkTarget = npc;
     if (dist(this.party.leader, npc) > TALK_DISTANCE) this.party.moveTo(npc);
@@ -298,6 +351,7 @@ export class WorldScene extends Phaser.Scene {
     const l = this.party.leader;
     if (dist(l, npc) <= TALK_DISTANCE) {
       this.talkTarget = null;
+      npc.setHighlight(false);
       l.stop();
       l.faceTowards(npc);
       npc.faceTowards(l);
