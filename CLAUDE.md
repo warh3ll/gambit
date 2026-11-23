@@ -7,6 +7,9 @@
 - Work on a branch (`feature/…`, `setup/…`, `fix/…`). Never merge to `main` without the designer's go-ahead.
   Every merge into `main` is pushed to GitHub (`origin`) right away.
   After a branch is merged into `main`, delete it (`git branch -d`, and on GitHub too if it was pushed).
+- Every save in the Gambit Editor commits the content files ("Editor save: …") and, on `main`, pushes them
+  (`tools/editorGit.ts`). On a feature branch those commits land on that branch and go out with its merge, so expect
+  them in `git log` and never drop or rewrite them.
 
 ## Project
 - Phaser 4 + TypeScript + Vite. `npm run dev`, `npm run build` (typecheck + build).

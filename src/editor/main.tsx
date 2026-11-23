@@ -7,6 +7,7 @@ import './editor.css';
 import { render } from 'preact';
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { useGame } from './gameLink';
+import { useGithub } from './github';
 import { type Tab, getNav, go, selectStep, useNav } from './nav';
 import { MapSide, MapSidebar } from './map/MapPanels';
 import { classList } from './trees/model';
@@ -48,6 +49,7 @@ function App() {
   const state = useStore();
   const nav = useNav();
   const game = useGame();
+  const github = useGithub();
   const [test, setTest] = useState<TestResult>(null);
   const problems = useMemo(() => validate(state.content), [state.content]);
   const flags = useMemo(() => allFlags(state.content), [state.content]);
@@ -126,9 +128,17 @@ function App() {
             ↷
           </button>
         </div>
-        <span class="save-state" title={dirty.map(fileName).join('\n')}>
-          {dirty.length ? 'Unsaved changes' : ''}
-        </span>
+        {dirty.length ? (
+          <span class="save-state" title={dirty.map(fileName).join('\n')}>
+            Unsaved changes
+          </span>
+        ) : (
+          github.text && (
+            <span class={`github-state ${github.state}`} title={github.detail}>
+              {github.text}
+            </span>
+          )
+        )}
         <button
           class={`save ${dirty.length ? 'primary' : ''}`}
           disabled={!dirty.length || state.status === 'saving'}

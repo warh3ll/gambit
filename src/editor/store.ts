@@ -8,6 +8,7 @@ import type { NpcFile } from '../data/npcs';
 import type { StoryFile } from '../data/story';
 import type { TreesFile } from '../data/trees';
 import type { Step } from '../game/script';
+import { checkGithubSoon } from './github';
 
 export interface Content {
   story: StoryFile;
@@ -206,6 +207,7 @@ export async function save(overwrite = false) {
     }
     set({ status: 'ready', saved, hashes, banner: null });
     writeDraft();
+    checkGithubSoon();
   } catch (err) {
     set({ status: 'ready', banner: { kind: 'error', text: `Saving failed: ${message(err)}` } });
   }

@@ -329,6 +329,7 @@ next to the game tab. It saves straight into the project's data files, and the g
 | 2026-11-23 | Saving a map in the editor updates the running game (the area reloads in place when calm). "Play from here" puts the party on any tile. |
 | 2026-11-23 | Skill trees can plan things the game can't do yet: new actions (name + description) and special effects in words. They're marked "to build" and implemented in M14. Number tweaks (power, cooldown, duration, range, stats) need no code per node. |
 | 2026-11-23 | The tree editor lays tiers out left to right. |
+| 2026-11-23 | Saving in the editor also commits the content and uploads it to GitHub (no separate step). The top bar shows whether it got there; failed uploads retry every minute. |
 
 ## Open questions for the designer
 

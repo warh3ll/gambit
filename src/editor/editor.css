@@ -207,6 +207,18 @@ a {
 .save {
   min-width: 76px;
 }
+/* Whether the last save reached GitHub (src/editor/github.ts). */
+.github-state {
+  color: var(--muted);
+  font-size: 13px;
+  cursor: help;
+}
+.github-state.done {
+  color: var(--green);
+}
+.github-state.failed {
+  color: var(--red);
+}
 
 .banner {
   display: flex;

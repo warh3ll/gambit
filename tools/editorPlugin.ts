@@ -3,12 +3,14 @@
  *
  *   GET  /__editor/content  → every content file: { files: { story: { data, hash }, 'area:martaHouse': … } }
  *   POST /__editor/save     ← { files: { story: { data, base } } }  (base = the hash the editor loaded)
+ *   GET  /__editor/git      → how uploading the last save to GitHub went (see editorGit.ts)
  *
  * Only these files can be read or written: story.json, npcs.json, trees.json, and the areas (src/data/areas/<id>.json, key
  * 'area:<id>'). Saving an area with `data: null` deletes its file; a new area is saved with base NO_FILE.
  * A save is refused (409) if a file changed on disk since the editor loaded it (e.g. edited by hand), so nothing
  * gets overwritten by accident.
  * Files are written as JSON laid out for reading: one event step per line where possible.
+ * After a save, the content files are committed and pushed to GitHub (editorGit.ts).
  *
  * `apply: 'serve'`: this only exists on the dev server, never in the itch build.
  */
@@ -18,6 +20,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import { resolve } from 'node:path';
 import type { Plugin } from 'vite';
 import { TILE_CHARS } from '../src/world/tiles.ts';
+import { gitStatus, syncContent } from './editorGit.ts';
 
 /** Content the editor may change: key → file (relative to the project root). */
 const CONTENT_FILES: Record<string, string> = {
@@ -99,8 +102,11 @@ async function handle(root: string, req: IncomingMessage, res: ServerResponse) {
       writeFileSync(file, text, 'utf8');
       files[key] = { hash: hash(text) };
     }
+    syncContent(root);
     return send(res, 200, { files });
   }
+
+  if (req.method === 'GET' && path === '/git') return send(res, 200, gitStatus());
 
   send(res, 404, { error: 'not found' });
 }
