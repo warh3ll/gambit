@@ -4,10 +4,11 @@
  * PLACEHOLDER WRITING: the designer owns the story; rewrite anything here.
  *
  * A line is { speaker, text }. Leave `speaker` out for narration.
- * Speakers: 'yasmi' | 'hyne' | 'oxleth' | 'arthur' | 'telara' | 'stranger'.
+ * Speakers: a party member ('yasmi', 'hyne', 'oxleth', 'arthur', 'telara'), an NPC id from src/data/npcs.ts,
+ * or 'stranger'.
  */
 
-export type SpeakerId = 'yasmi' | 'hyne' | 'oxleth' | 'arthur' | 'telara' | 'stranger';
+export type SpeakerId = string;
 
 export interface Line {
   speaker?: SpeakerId;
@@ -15,7 +16,7 @@ export interface Line {
 }
 
 /** Names for speakers who aren't party members. */
-export const SPEAKER_NAMES: Partial<Record<SpeakerId, string>> = {
+export const SPEAKER_NAMES: Record<SpeakerId, string> = {
   stranger: 'The Stranger',
 };
 
@@ -36,17 +37,17 @@ export interface StoryTrigger {
 }
 
 /**
- * Story triggers: the digit is placed on tiles in the map (src/data/maps/).
- * Each plays once, when the party leader steps on one of its tiles.
+ * Story triggers: placed on a map through the area's legend, e.g. `'1': { trigger: 'forestEdge' }` in
+ * src/data/areas/barrelsbyRoad.ts. Each plays once, when the party leader steps on one of its tiles.
  */
 export const TRIGGERS: Record<string, StoryTrigger> = {
-  '1': {
+  forestEdge: {
     lines: [
       { text: 'The road narrows as the trees close in. Fresh footprints lead east, many of them.' },
       { speaker: 'hyne', text: 'Townsfolk. They walked this way willingly.' },
     ],
   },
-  '2': {
+  meetStranger: {
     startsFight: true,
     lines: [
       { text: 'Ahead, in a clearing, a tall figure in a dark coat waits as if he expected company.' },

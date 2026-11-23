@@ -33,9 +33,12 @@ export class UIScene extends Phaser.Scene {
     super('UI');
   }
 
-  init(data: { party: Party; combat: CombatManager }) {
+  private areaName = '';
+
+  init(data: { party: Party; combat: CombatManager; areaName?: string }) {
     this.party = data.party;
     this.combat = data.combat;
+    this.areaName = data.areaName ?? '';
     this.portraits = [];
   }
 
@@ -74,6 +77,7 @@ export class UIScene extends Phaser.Scene {
 
     pixelCamera(this, true, (view) => this.layout(view));
     this.refreshLeader();
+    if (this.areaName) this.showAreaName();
   }
 
   update() {
@@ -106,6 +110,13 @@ export class UIScene extends Phaser.Scene {
     this.hint.setPosition(MARGIN + width + 8, view.height - MARGIN);
     this.banner.setX(view.width / 2);
     this.savedNote.setPosition(view.width - MARGIN, view.height - MARGIN);
+  }
+
+  /** The area's name, shown for a moment on arrival. */
+  private showAreaName() {
+    if (this.banner.visible) return; // a fight banner has priority
+    this.banner.setText(this.areaName).setColor('#d8d0e8').setAlpha(0).setVisible(true);
+    this.tweens.add({ targets: this.banner, alpha: 1, duration: 300, yoyo: true, hold: 1400, onComplete: () => this.banner.setVisible(false) });
   }
 
   /** Small fading "Saved" note in the corner after each autosave. */

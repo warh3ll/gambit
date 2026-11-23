@@ -1,20 +1,25 @@
+import type { AreaDef, Marker } from '../data/areas/types';
 import type { EnemyTypeId } from '../data/enemies';
 import { TILE_CHARS, Tile, isBlocking } from './tiles';
 
-/** Map characters that place an enemy. */
-const ENEMY_CHARS: Record<string, EnemyTypeId> = {
-  w: 'wolf',
-  b: 'bandit',
-  a: 'banditArcher',
-  c: 'acolyte',
-  S: 'stranger',
+/** Markers every area understands; an area's own legend can add to or override these. */
+const SHARED_MARKERS: Record<string, Marker> = {
+  '@': { start: 'default' },
+  w: { enemy: 'wolf' },
+  b: { enemy: 'bandit' },
+  a: { enemy: 'banditArcher' },
+  c: { enemy: 'acolyte' },
 };
 
 /** Enemies within this many tiles of each other (chained) belong to the same group. */
 const GROUP_DISTANCE = 4;
 
+type TilePos = { x: number; y: number };
+
 export interface EncounterDef {
   id: string;
+  /** Stays beaten once beaten (story/boss fights). Other groups respawn whenever the area is entered. */
+  unique: boolean;
   enemies: { type: EnemyTypeId; x: number; y: number }[];
 }
 
@@ -23,47 +28,66 @@ export interface LoadedMap {
   height: number;
   /** Tile ids, [y][x]. */
   tiles: number[][];
-  /** Party start tile. */
-  spawn: { x: number; y: number };
+  /** Named arrival points. */
+  starts: Map<string, TilePos>;
+  /** Exit tiles, keyed "x,y". */
+  exits: Map<string, { to: string; at: string }>;
+  npcs: { id: string; x: number; y: number }[];
   encounters: EncounterDef[];
-  /** Story trigger digit for each trigger tile, keyed "x,y". */
+  /** Story trigger id for each trigger tile, keyed "x,y". */
   triggers: Map<string, string>;
 }
 
-/** Turns an ASCII map (see src/data/maps/) into tiles, enemy groups, spawn and story triggers. */
-export function loadMap(rows: string[]): LoadedMap {
+/** Turns an area's ASCII map + legend into tiles, start points, exits, NPCs, enemy groups and story triggers. */
+export function loadMap(area: AreaDef): LoadedMap {
+  const rows = area.map;
+  const legend = { ...SHARED_MARKERS, ...area.legend };
   const height = rows.length;
   const width = rows[0].length;
   rows.forEach((r, y) => {
-    if (r.length !== width) throw new Error(`map row ${y} is ${r.length} wide, expected ${width}`);
+    if (r.length !== width) throw new Error(`${area.id}: map row ${y} is ${r.length} wide, expected ${width}`);
   });
 
   const tiles: number[][] = [];
-  const markers: { ch: string; x: number; y: number }[] = [];
+  const placed: { marker: Marker; x: number; y: number }[] = [];
   for (let y = 0; y < height; y++) {
     const line: number[] = [];
     for (let x = 0; x < width; x++) {
       const ch = rows[y][x];
       const tile = TILE_CHARS[ch];
-      if (tile === undefined) markers.push({ ch, x, y });
+      if (tile === undefined) {
+        const marker = legend[ch];
+        if (!marker) throw new Error(`${area.id}: unknown map character "${ch}" at ${x},${y}`);
+        placed.push({ marker, x, y });
+      }
       line.push(tile ?? Tile.Grass);
     }
     tiles.push(line);
   }
 
-  let spawn: { x: number; y: number } | null = null;
-  const enemies: EncounterDef['enemies'] = [];
-  const triggers = new Map<string, string>();
-  for (const m of markers) {
-    tiles[m.y][m.x] = groundUnder(rows, m.x, m.y);
-    if (m.ch === '@') spawn = { x: m.x, y: m.y };
-    else if (ENEMY_CHARS[m.ch]) enemies.push({ type: ENEMY_CHARS[m.ch], x: m.x, y: m.y });
-    else if (/[1-9]/.test(m.ch)) triggers.set(`${m.x},${m.y}`, m.ch);
-    else throw new Error(`unknown map character "${m.ch}" at ${m.x},${m.y}`);
+  const out: LoadedMap = {
+    width,
+    height,
+    tiles,
+    starts: new Map(),
+    exits: new Map(),
+    npcs: [],
+    encounters: [],
+    triggers: new Map(),
+  };
+  const enemies: (EncounterDef['enemies'][number] & { unique: boolean })[] = [];
+  for (const { marker: m, x, y } of placed) {
+    tiles[y][x] = m.tile ? Tile[m.tile] : groundUnder(rows, x, y);
+    const key = `${x},${y}`;
+    if ('start' in m) out.starts.set(m.start, { x, y });
+    else if ('exit' in m) out.exits.set(key, m.exit);
+    else if ('enemy' in m) enemies.push({ type: m.enemy, x, y, unique: !!m.unique });
+    else if ('npc' in m) out.npcs.push({ id: m.npc, x, y });
+    else if ('trigger' in m) out.triggers.set(key, m.trigger);
   }
-  if (!spawn) throw new Error('map has no party start (@)');
-
-  return { width, height, tiles, spawn, encounters: groupEnemies(enemies), triggers };
+  if (!out.starts.size) throw new Error(`${area.id}: map has no start point`);
+  out.encounters = groupEnemies(enemies);
+  return out;
 }
 
 /** The ground a marker stands on: the most common walkable tile around it. */
@@ -81,9 +105,9 @@ function groundUnder(rows: string[], x: number, y: number): number {
   return best;
 }
 
-/** Groups enemies standing near each other, numbered west to east. */
-function groupEnemies(all: EncounterDef['enemies']): EncounterDef[] {
-  const groups: EncounterDef['enemies'][] = [];
+/** Groups enemies standing near each other, numbered west to east. A group is unique if any member is. */
+function groupEnemies(all: (EncounterDef['enemies'][number] & { unique: boolean })[]): EncounterDef[] {
+  const groups: (typeof all)[] = [];
   const left = [...all];
   while (left.length) {
     const group = [left.shift()!];
@@ -96,6 +120,12 @@ function groupEnemies(all: EncounterDef['enemies']): EncounterDef[] {
     }
     groups.push(group);
   }
-  const minX = (g: EncounterDef['enemies']) => Math.min(...g.map((e) => e.x));
-  return groups.sort((a, b) => minX(a) - minX(b)).map((enemies, i) => ({ id: `group-${i + 1}`, enemies }));
+  const minX = (g: typeof all) => Math.min(...g.map((e) => e.x));
+  return groups
+    .sort((a, b) => minX(a) - minX(b))
+    .map((g, i) => ({
+      id: `group-${i + 1}`,
+      unique: g.some((e) => e.unique),
+      enemies: g.map(({ type, x, y }) => ({ type, x, y })),
+    }));
 }

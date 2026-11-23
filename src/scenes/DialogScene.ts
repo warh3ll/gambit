@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { NPCS } from '../data/npcs';
 import { PARTY } from '../data/party';
 import { type Line, SPEAKER_NAMES } from '../data/story';
 import { pixelCamera, sharpenText, textStyle, type ViewSize } from '../view';
@@ -64,7 +65,8 @@ export class DialogScene extends Phaser.Scene {
     if (!line) return;
     const w = Math.min(this.view.width - 16, BOX_MAX_WIDTH);
     const x = Math.floor((this.view.width - w) / 2);
-    const face = line.speaker ? `portrait-${line.speaker}` : null;
+    const portrait = line.speaker ? `portrait-${line.speaker}` : null;
+    const face = portrait && this.textures.exists(portrait) ? portrait : null;
     const textX = x + PAD + (face ? PORTRAIT_SIZE + 6 : 0);
     const textW = x + w - PAD - textX;
 
@@ -91,5 +93,5 @@ export class DialogScene extends Phaser.Scene {
 }
 
 function speakerName(id: string) {
-  return PARTY.find((c) => c.id === id)?.name ?? SPEAKER_NAMES[id as keyof typeof SPEAKER_NAMES] ?? id;
+  return PARTY.find((c) => c.id === id)?.name ?? NPCS[id]?.name ?? SPEAKER_NAMES[id] ?? id;
 }

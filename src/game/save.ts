@@ -1,4 +1,5 @@
 import { MAX_TACTIC_ROWS } from '../config';
+import { START_AREA } from '../data/areas';
 import { type CharacterDef, DEFAULT_LEADER_ID, PARTY } from '../data/party';
 import { ACTIONS, type TacticRow, type TargetGroup, TARGETS, TYPES } from '../data/tactics';
 
@@ -7,7 +8,7 @@ import { ACTIONS, type TacticRow, type TargetGroup, TARGETS, TYPES } from '../da
  * One save. Bump SAVE_VERSION and add a step to `migrate` whenever the shape changes,
  * so existing saves keep working.
  */
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
 const STORAGE_KEY = 'gambit.save';
 /** M5 stored only tactics under this key; it's folded into the save on first load. */
 const OLD_TACTICS_KEY = 'gambit.tactics.v1';
@@ -35,9 +36,9 @@ export interface SaveData {
   /** Leader position in that area, or null for the area's start point. */
   position: { x: number; y: number } | null;
   leaderId: string;
-  /** Story flags: e.g. 'introPlayed', 'trigger.barrelsbyRoad.2', 'sliceComplete'. */
+  /** Story flags: e.g. 'introPlayed', 'story.meetStranger', 'sliceComplete'. */
   flags: Record<string, FlagValue>;
-  /** Encounter groups beaten for good, as '<area>/<group id>'. */
+  /** Unique encounter groups beaten for good, as '<area>/<group id>'. (Other groups respawn.) */
   beaten: string[];
   members: Record<string, MemberSave>;
 }
@@ -49,7 +50,7 @@ export function newSaveData(): SaveData {
   return {
     version: SAVE_VERSION,
     savedAt: 0,
-    area: 'barrelsbyRoad',
+    area: START_AREA,
     position: null,
     leaderId: DEFAULT_LEADER_ID,
     flags: {},
@@ -113,8 +114,21 @@ export function validTactics(def: CharacterDef, rows: unknown[]): TacticRow[] {
 function migrate(data: { version?: number }): SaveData {
   const version = data.version ?? 0;
   if (version > SAVE_VERSION) throw new Error('save is from a newer version of the game');
-  // e.g. if (version < 2) { ...change data to the v2 shape... }
-  return data as SaveData;
+  const d = data as SaveData;
+  if (version < 2) {
+    // v2: story triggers are named instead of numbered.
+    const renamed: Record<string, string> = {
+      'trigger.barrelsbyRoad.1': 'story.forestEdge',
+      'trigger.barrelsbyRoad.2': 'story.meetStranger',
+    };
+    for (const [from, to] of Object.entries(renamed)) {
+      if (d.flags?.[from] !== undefined) {
+        d.flags[to] = d.flags[from];
+        delete d.flags[from];
+      }
+    }
+  }
+  return d;
 }
 
 /** Fills in anything missing and drops anything invalid, so a damaged or outdated save still loads. */

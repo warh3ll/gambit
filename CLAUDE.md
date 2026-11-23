@@ -16,8 +16,8 @@
   (~360 game px tall). Lay out UI in game pixels from the view size, never fixed screen sizes. 16px tiles.
 - All tactic building blocks (Actions, Targets, Types) live in `src/data/tactics.ts`.
   Keep `docs/TACTICS.md` in sync when adding or changing one.
-- Designer-editable content: story text in `src/data/story.ts`, maps as ASCII in `src/data/maps/`
-  (legend in the file header), real art overrides in `src/data/art.ts`. Keep these readable for a non-programmer.
+- Designer-editable content: story text in `src/data/story.ts`, areas (ASCII map + legend) in `src/data/areas/`,
+  NPCs in `src/data/npcs.ts`, real art overrides in `src/data/art.ts`. Keep these readable for a non-programmer.
 - The save game lives in `src/game/save.ts`. When its shape changes, bump `SAVE_VERSION` and add a step to
   `migrate()` so the designer's existing save keeps working.
 - Debug keys (J/K/V) are dev-only (`import.meta.env.DEV`); never ship them.

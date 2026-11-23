@@ -20,6 +20,7 @@ npm run preview   # serve the production build
 |---|---|
 | Left click (map) | Move the party (outside combat) |
 | Click a portrait | Make that character the leader |
+| Click a character (NPC) | Walk over and talk |
 | T | Open / close the tactics editor (pauses the game). Edits are saved in the browser. |
 | Click / Space / Enter | Next line of dialogue |
 
@@ -36,7 +37,8 @@ The game autosaves (one save, in the browser). The title screen offers *Continue
 ## Editing content
 
 - Story text: [src/data/story.ts](src/data/story.ts)
-- The map: [src/data/maps/barrelsbyRoad.ts](src/data/maps/barrelsbyRoad.ts) (ASCII, legend at the top)
+- Areas (maps): [src/data/areas/](src/data/areas/) — one file per area, ASCII map + legend; list new ones in `index.ts`
+- NPCs: [src/data/npcs.ts](src/data/npcs.ts)
 - Enemies: [src/data/enemies.ts](src/data/enemies.ts) · Party: [src/data/party.ts](src/data/party.ts)
 - Real art: drop PNGs in `public/art/` and list them in [src/data/art.ts](src/data/art.ts)
 

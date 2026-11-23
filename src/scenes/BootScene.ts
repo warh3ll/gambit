@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { TILE_SIZE } from '../config';
 import { ENEMIES } from '../data/enemies';
+import { NPCS } from '../data/npcs';
 import { PARTY } from '../data/party';
 import { ART_FILES } from '../data/art';
 import { TILE_COUNT, Tile } from '../world/tiles';
@@ -47,6 +48,16 @@ export class BootScene extends Phaser.Scene {
       make(`enemy-${e.id}`, w, h);
     }
 
+    // NPCs: coloured body with a lighter head band.
+    for (const n of Object.values(NPCS)) {
+      g.clear();
+      g.fillStyle(ink).fillRect(0, 0, 12, 16);
+      g.fillStyle(n.color).fillRect(1, 1, 10, 14);
+      g.fillStyle(0xe8dcc8).fillRect(1, 1, 10, 3);
+      g.fillStyle(ink).fillRect(3, 5, 2, 2).fillRect(7, 5, 2, 2);
+      make(`npc-${n.id}`, 12, 16);
+    }
+
     // Portraits: face crop of the same placeholder.
     const p = PORTRAIT_SIZE - 4;
     for (const c of PARTY) {
@@ -55,6 +66,14 @@ export class BootScene extends Phaser.Scene {
       g.fillStyle(c.color).fillRect(3, 4, p - 6, p - 4);
       g.fillStyle(ink).fillRect(6, 9, 2, 3).fillRect(p - 8, 9, 2, 3);
       make(`portrait-${c.id}`, p, p);
+    }
+    for (const n of Object.values(NPCS)) {
+      g.clear();
+      g.fillStyle(0x2a2438).fillRect(0, 0, p, p);
+      g.fillStyle(n.color).fillRect(3, 4, p - 6, p - 4);
+      g.fillStyle(0xe8dcc8).fillRect(3, 4, p - 6, 3);
+      g.fillStyle(ink).fillRect(6, 10, 2, 3).fillRect(p - 8, 10, 2, 3);
+      make(`portrait-${n.id}`, p, p);
     }
     // The Stranger's portrait: hooded face.
     {
@@ -177,6 +196,28 @@ export class BootScene extends Phaser.Scene {
           grass(ox);
           g.fillStyle(0x6b5232).fillRect(ox, 6, T, 2).fillRect(ox, 11, T, 2);
           g.fillStyle(0x4a3822).fillRect(ox + 2, 4, 2, 10).fillRect(ox + 11, 4, 2, 10);
+          break;
+        case Tile.Floor:
+          g.fillStyle(0x6b5038).fillRect(ox, 0, T, T);
+          g.fillStyle(0x5a4230);
+          for (let r = 0; r < 4; r++) g.fillRect(ox, r * 4 + 3, T, 1);
+          g.fillRect(ox + 5, 0, 1, 4).fillRect(ox + 11, 4, 1, 4).fillRect(ox + 3, 8, 1, 4).fillRect(ox + 9, 12, 1, 4);
+          break;
+        case Tile.Wall:
+          g.fillStyle(0x3a3046).fillRect(ox, 0, T, T);
+          g.fillStyle(0x4a3e58).fillRect(ox, 0, T, 10);
+          g.fillStyle(0x2a2234).fillRect(ox, 10, T, 1).fillRect(ox + 7, 0, 1, 10);
+          break;
+        case Tile.Furniture:
+          g.fillStyle(0x6b5038).fillRect(ox, 0, T, T);
+          g.fillStyle(0x3a2a1c).fillRect(ox + 1, 2, T - 2, T - 3);
+          g.fillStyle(0x8a6a44).fillRect(ox + 2, 3, T - 4, T - 6);
+          break;
+        case Tile.Door:
+          g.fillStyle(0x3a1e1a).fillRect(ox, 0, T, T);
+          g.fillStyle(0x7a5232).fillRect(ox + 2, 1, T - 4, T - 1);
+          g.fillStyle(0x5a3a22).fillRect(ox + 7, 1, 2, T - 1);
+          g.fillStyle(0xd9b45a).fillRect(ox + 10, 8, 2, 2);
           break;
         case Tile.Bridge:
           water(ox);

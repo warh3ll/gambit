@@ -1,22 +1,33 @@
 import Phaser from 'phaser';
 import { TILE_SIZE } from '../config';
 import { ENEMIES } from '../data/enemies';
-import { BARRELSBY_ROAD } from '../data/maps/barrelsbyRoad';
+import { getArea } from '../data/areas';
+import type { AreaDef } from '../data/areas/types';
+import { NPCS } from '../data/npcs';
 import { ENDING, INTRO, type Line, TRIGGERS } from '../data/story';
 import { session } from '../game/session';
 import { CombatManager, type CombatResult } from '../systems/CombatManager';
 import { CombatSystem } from '../systems/CombatSystem';
 import { Pathfinder, type Point } from '../systems/Pathfinder';
-import { pixelCamera } from '../view';
+import { pixelCamera, type ViewSize } from '../view';
 import { Enemy } from '../world/Enemy';
 import { type LoadedMap, loadMap } from '../world/mapLoader';
+import { Npc } from '../world/Npc';
 import { Party } from '../world/Party';
 import { isBlocking } from '../world/tiles';
 import type { DialogData } from './DialogScene';
 import type { UIScene } from './UIScene';
 
-/** The area this scene shows. (Only one area until M10.) */
-const AREA_ID = 'barrelsbyRoad';
+/** How the world scene is started: a specific area/arrival point, or (by default) wherever the save says. */
+export interface WorldData {
+  area?: string;
+  /** Start point name in that area (set when arriving through an exit). */
+  entry?: string;
+}
+
+/** Talking range: the leader stops and talks once this close to an NPC. */
+const TALK_DISTANCE = 20;
+const FADE_MS = 250;
 
 /** How often (seconds) the leader's position is remembered, for retry checkpoints. */
 const TRAIL_INTERVAL = 0.25;
@@ -29,11 +40,19 @@ interface Checkpoint {
   hp: Map<string, number>;
 }
 
-/** The explorable world: map, party movement, enemies, story triggers and camera. */
+/**
+ * The explorable world: one area at a time (map, party, enemies, NPCs, exits, story triggers, camera).
+ * Going through an exit restarts this scene with the next area; every area load respawns its enemies.
+ */
 export class WorldScene extends Phaser.Scene {
   party!: Party;
   combat!: CombatManager;
+  private area!: AreaDef;
+  private entry: string | undefined;
   private map!: LoadedMap;
+  /** NPC the party is walking up to, to talk. */
+  private talkTarget: Npc | null = null;
+  private transitioning = false;
   private pathfinder!: Pathfinder;
   private combatSystem!: CombatSystem;
   private enemies: Enemy[] = [];
@@ -54,8 +73,19 @@ export class WorldScene extends Phaser.Scene {
     super('World');
   }
 
+  init(data: WorldData) {
+    this.area = getArea(data?.area ?? session.data.area);
+    this.entry = data?.entry;
+    this.enemies = [];
+    this.talkTarget = null;
+    this.transitioning = false;
+    this.trail = [];
+    this.trailTimer = 0;
+    this.ended = false;
+  }
+
   create() {
-    this.map = loadMap(BARRELSBY_ROAD);
+    this.map = loadMap(this.area);
     const { width, height, tiles } = this.map;
     const tilemap = this.make.tilemap({ data: tiles, tileWidth: TILE_SIZE, tileHeight: TILE_SIZE });
     const tileset = tilemap.addTilesetImage('tiles');
@@ -63,9 +93,16 @@ export class WorldScene extends Phaser.Scene {
     tilemap.createLayer(0, tileset, 0, 0)?.setDepth(0);
 
     this.pathfinder = new Pathfinder(width, height, TILE_SIZE, (tx, ty) => !isBlocking(tiles[ty][tx]));
-    const spawn = this.pathfinder.tileCenter(this.map.spawn.x, this.map.spawn.y);
+    const startTile = this.map.starts.get('default') ?? [...this.map.starts.values()][0];
+    const spawn = this.pathfinder.tileCenter(startTile.x, startTile.y);
     this.party = new Party(this, this.pathfinder, spawn);
     this.enemies = this.spawnEncounters();
+    this.map.npcs.forEach((n) => {
+      const def = NPCS[n.id];
+      if (!def) throw new Error(`${this.area.id}: unknown NPC "${n.id}"`);
+      const p = this.pathfinder.tileCenter(n.x, n.y);
+      new Npc(this, def, p.x, p.y);
+    });
     const start = this.applySave(spawn);
     this.combat = new CombatManager(this.party, this.enemies);
     this.combatSystem = new CombatSystem(this, this.pathfinder);
@@ -76,9 +113,10 @@ export class WorldScene extends Phaser.Scene {
     this.leaderMarker = this.add.image(0, 0, 'leader-marker').setDepth(10_000);
     this.aggroDebug = this.add.graphics().setDepth(2).setVisible(false);
 
-    pixelCamera(this, false);
     const cam = this.cameras.main;
-    cam.setBounds(0, 0, width * TILE_SIZE, height * TILE_SIZE);
+    if (this.area.kind !== 'outdoor') cam.setBackgroundColor('#0d0b14');
+    pixelCamera(this, false, (view) => this.fitCamera(view));
+    cam.fadeIn(FADE_MS, 13, 11, 20);
     cam.startFollow(this.party.leader.sprite, true, 0.12, 0.12);
     this.party.on('leaderChanged', () => {
       cam.startFollow(this.party.leader.sprite, true, 0.12, 0.12);
@@ -86,7 +124,9 @@ export class WorldScene extends Phaser.Scene {
     });
 
     this.input.mouse?.disableContextMenu();
-    this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.onClick(pointer));
+    this.input.on('pointerdown', (pointer: Phaser.Input.Pointer, over: Phaser.GameObjects.GameObject[]) =>
+      this.onClick(pointer, over),
+    );
     this.events.on(Phaser.Scenes.Events.RESUME, () => (this.ignoreClicksUntil = performance.now() + 150));
     this.input.keyboard?.on('keydown-T', () => this.openTactics());
 
@@ -104,7 +144,8 @@ export class WorldScene extends Phaser.Scene {
     document.addEventListener('visibilitychange', onHide);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => document.removeEventListener('visibilitychange', onHide));
 
-    this.scene.launch('UI', { party: this.party, combat: this.combat });
+    this.scene.launch('UI', { party: this.party, combat: this.combat, areaName: this.area.name });
+    if (this.entry) this.saveGame(); // arrived through an exit: save the new area
     if (!session.flag('introPlayed')) {
       this.time.delayedCall(400, () => this.playStory(INTRO, () => session.setFlag('introPlayed')));
     }
@@ -122,28 +163,47 @@ export class WorldScene extends Phaser.Scene {
       m.tactics = saved.tactics.map((r) => ({ ...r }));
     }
     this.party.setLeader(save.leaderId);
-    for (const e of this.enemies) if (save.beaten.includes(`${AREA_ID}/${e.groupId}`)) e.despawn();
+    // Only unique groups stay beaten; everything else respawned with this area load.
+    for (const e of this.enemies) if (save.beaten.includes(this.encounterKey(e.groupId))) e.despawn();
 
-    const start = save.area === AREA_ID && save.position ? save.position : spawn;
-    this.party.face(0); // face east, down the road
+    let start = spawn;
+    let facing = 0; // east
+    const entryTile = this.entry ? this.map.starts.get(this.entry) : undefined;
+    if (entryTile) {
+      start = this.pathfinder.tileCenter(entryTile.x, entryTile.y);
+      // Face the door you came through, so the followers line up behind the leader, away from it.
+      facing = this.towardsNearestExit(start);
+    } else if (save.area === this.area.id && save.position) {
+      start = save.position;
+    }
+    this.party.face(facing);
     this.party.placeAt(start);
     return start;
   }
 
-  /** Copies the world into the save and writes it (autosave). */
-  private saveGame() {
+  /** Copies the party into the save data (without writing it). */
+  private captureParty() {
     const save = session.data;
-    const l = this.party.leader;
-    save.area = AREA_ID;
-    save.position = { x: Math.round(l.x), y: Math.round(l.y) };
-    save.leaderId = l.id;
+    save.leaderId = this.party.leader.id;
     for (const m of this.party.members) {
       const saved = save.members[m.id];
       if (!saved) continue;
       saved.hp = m.hp;
       saved.tactics = m.tactics.map((r) => ({ ...r }));
     }
+  }
+
+  /** Copies the world into the save and writes it (autosave). */
+  private saveGame() {
+    const l = this.party.leader;
+    this.captureParty();
+    session.data.area = this.area.id;
+    session.data.position = { x: Math.round(l.x), y: Math.round(l.y) };
     session.autosave();
+  }
+
+  private encounterKey(groupId: string) {
+    return `${this.area.id}/${groupId}`;
   }
 
   update(_time: number, deltaMs: number) {
@@ -151,9 +211,12 @@ export class WorldScene extends Phaser.Scene {
     for (const u of this.party.members) u.tickTimers(dt);
     for (const e of this.enemies) e.tickTimers(dt);
 
+    if (this.transitioning) return;
     if (!this.combat.inCombat) {
       this.recordTrail(dt);
       if (this.checkTriggers()) return; // a story beat just paused the world
+      if (this.checkExit()) return;
+      this.checkTalk();
     }
 
     this.combat.update(); // start / end fights
@@ -193,16 +256,75 @@ export class WorldScene extends Phaser.Scene {
   /** Plays a story trigger when the leader steps on one. Returns true if one started. */
   private checkTriggers(): boolean {
     const l = this.party.leader;
-    const digit = this.map.triggers.get(`${Math.floor(l.x / TILE_SIZE)},${Math.floor(l.y / TILE_SIZE)}`);
-    const flag = `trigger.${AREA_ID}.${digit}`;
-    if (!digit || session.flag(flag)) return false;
-    const trigger = TRIGGERS[digit];
+    const id = this.map.triggers.get(tileKey(l));
+    const flag = `story.${id}`;
+    if (!id || session.flag(flag)) return false;
+    const trigger = TRIGGERS[id];
     if (!trigger?.lines.length) return false;
     this.playStory(trigger.lines, () => {
       session.setFlag(flag); // only once read, so reloading mid-dialogue plays it again
       if (trigger.startsFight) this.nearestGroupAttacks();
     });
     return true;
+  }
+
+  // ── travel & talking ──
+
+  /** Goes through an exit when the leader steps on one. Returns true if leaving. */
+  private checkExit(): boolean {
+    const exit = this.map.exits.get(tileKey(this.party.leader));
+    if (!exit) return false;
+    this.transitioning = true;
+    this.talkTarget = null;
+    for (const m of this.party.members) m.stop();
+    this.captureParty(); // the next area rebuilds the party from the save data
+    const cam = this.cameras.main;
+    cam.fadeOut(FADE_MS, 13, 11, 20);
+    cam.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () =>
+      this.scene.restart({ area: exit.to, entry: exit.at } satisfies WorldData),
+    );
+    return true;
+  }
+
+  private talkTo(npc: Npc) {
+    this.talkTarget = npc;
+    if (dist(this.party.leader, npc) > TALK_DISTANCE) this.party.moveTo(npc);
+  }
+
+  /** Starts the conversation once the leader has walked up to the NPC (or gives up if they stopped short). */
+  private checkTalk() {
+    const npc = this.talkTarget;
+    if (!npc) return;
+    const l = this.party.leader;
+    if (dist(l, npc) <= TALK_DISTANCE) {
+      this.talkTarget = null;
+      l.stop();
+      l.faceTowards(npc);
+      npc.faceTowards(l);
+      this.playStory(npc.def.lines);
+    } else if (!l.moving) {
+      this.talkTarget = null;
+    }
+  }
+
+  /** Direction from `p` towards the closest exit. */
+  private towardsNearestExit(p: Point): number {
+    let best: Point | null = null;
+    for (const key of this.map.exits.keys()) {
+      const [tx, ty] = key.split(',').map(Number);
+      const c = this.pathfinder.tileCenter(tx, ty);
+      if (!best || dist(p, c) < dist(p, best)) best = c;
+    }
+    return best ? Math.atan2(best.y - p.y, best.x - p.x) : 0;
+  }
+
+  /** Camera limits: the map, centred when it's smaller than the screen (e.g. a small house). */
+  private fitCamera(view: ViewSize) {
+    const w = this.map.width * TILE_SIZE;
+    const h = this.map.height * TILE_SIZE;
+    const x = w < view.width ? Math.floor((w - view.width) / 2) : 0;
+    const y = h < view.height ? Math.floor((h - view.height) / 2) : 0;
+    this.cameras.main.setBounds(x, y, Math.max(w, view.width), Math.max(h, view.height));
   }
 
   // ── fights ──
@@ -237,9 +359,11 @@ export class WorldScene extends Phaser.Scene {
       this.saveGame();
       return;
     }
+    // Unique groups (story/boss fights) stay beaten; the rest respawn next time the area loads.
     for (const groupId of new Set(fought.map((e) => e.groupId))) {
-      const id = `${AREA_ID}/${groupId}`;
-      if (!session.data.beaten.includes(id)) session.data.beaten.push(id);
+      const unique = this.map.encounters.find((g) => g.id === groupId)?.unique;
+      const key = this.encounterKey(groupId);
+      if (unique && !session.data.beaten.includes(key)) session.data.beaten.push(key);
     }
     this.saveGame();
     if (fought.some((e) => e.def.id === 'stranger')) {
@@ -280,12 +404,19 @@ export class WorldScene extends Phaser.Scene {
 
   // ── input ──
 
-  private onClick(pointer: Phaser.Input.Pointer) {
+  private onClick(pointer: Phaser.Input.Pointer, over: Phaser.GameObjects.GameObject[]) {
     if (!pointer.leftButtonDown()) return;
-    if (performance.now() < this.ignoreClicksUntil) return;
+    if (performance.now() < this.ignoreClicksUntil || this.transitioning) return;
     const ui = this.scene.get('UI') as UIScene;
     if (ui.isOverUI(pointer)) return;
     if (this.combat.inCombat) return; // the party follows its tactics in a fight
+
+    const npc = over.map((o) => o.getData('npc') as Npc | undefined).find(Boolean);
+    if (npc) {
+      this.talkTo(npc);
+      return;
+    }
+    this.talkTarget = null;
 
     // Convert via this scene's camera explicitly (worldX may come from the UI scene's camera).
     const world = pointer.positionToCamera(this.cameras.main) as Phaser.Math.Vector2;
@@ -334,4 +465,5 @@ export class WorldScene extends Phaser.Scene {
 }
 
 const dist = (a: Point, b: Point) => Math.hypot(a.x - b.x, a.y - b.y);
+const tileKey = (p: Point) => `${Math.floor(p.x / TILE_SIZE)},${Math.floor(p.y / TILE_SIZE)}`;
 const avg = (units: Point[], k: 'x' | 'y') => units.reduce((s, u) => s + u[k], 0) / units.length;

@@ -32,7 +32,7 @@ All of them share one foundation: a **game state** that is saved and loaded. Tha
 
 ---
 
-## 1. World: areas and travel
+## 1. World: areas and travel — ✅ built in M10 (shops, inns, recruiting come with §7)
 
 **Proposal**
 - The world is split into **areas**. Each area is a map (the ASCII grid format we already use) plus a data file listing:
@@ -225,7 +225,7 @@ Each step ends with something playable, like the milestones so far.
 | # | Milestone | Why this order |
 |---|---|---|
 | M9 ✅ | **Game state & saving** | Everything else stores its data here. |
-| M10 | **Areas & travel** (2 areas from the slice + exits, NPC you can click) | The world everything else happens in. |
+| M10 ✅ | **Areas & travel** (2 areas from the slice + exits, NPC you can click) | The world everything else happens in. |
 | M11 | **Event scripting** (steps, triggers, flags, choices) | Story drives party changes and unlocks. |
 | M12 | **Roster & party manager** (join/leave from events, P screen) | Needs events to add/remove members. |
 | M13 | **XP & levels** | Needs saving; feeds the trees. |

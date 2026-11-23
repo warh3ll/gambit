@@ -30,7 +30,7 @@ refining those tactics.
 | Language | TypeScript, bundled with Vite |
 | Resolution | Canvas fills the browser window (any aspect, incl. ultrawide). Whole-number pixel zoom so ~360 world px fit top to bottom (1080p → 3×, 1440p → 4×); wider screens see more. UI text at full resolution. |
 | Tile size | 16×16 |
-| Maps | ASCII text maps in `src/data/maps/` (one character per tile, editable in any text editor). Tiled can come later, together with a real tileset. |
+| Maps | Areas in `src/data/areas/`: an ASCII map (one character per tile) plus a legend for exits, NPCs, enemies and story triggers. Tiled can come later, together with a real tileset. |
 | Release | `npm run build` → zip `dist/` → upload as HTML5 game on itch.io |
 
 ### Code map
@@ -40,7 +40,8 @@ refining those tactics.
 | `src/data/tactics.ts` | **All tactic pieces**: Actions, Targets, Types, tactic row format |
 | `src/data/party.ts` | The party: stats, known actions, default tactics |
 | `src/data/story.ts` | **All story text**: intro, story triggers, ending, end screen |
-| `src/data/maps/` | **Maps** as ASCII grids (legend at the top of each file) |
+| `src/data/areas/` | **Areas**: one file per area (map + legend); list new areas in `index.ts` |
+| `src/data/npcs.ts` | **NPCs**: name, look, what they say |
 | `src/data/art.ts` | **Replacing placeholder art**: list real PNGs here, key → file in `public/art/` |
 | `src/systems/TacticEngine.ts` | Picks which tactic row fires (top to bottom, first match) |
 | `src/systems/Pathfinder.ts` | A* pathfinding on the tile grid + path smoothing |
@@ -51,7 +52,7 @@ refining those tactics.
 | `src/systems/CombatText.ts` | Floating combat text: damage, heals, buff/debuff names |
 | `src/game/save.ts` | **The save game**: what's saved, versioning/migration, loading and writing (localStorage) |
 | `src/game/session.ts` | The game being played: current save data, story flags, autosave |
-| `src/world/` | Units (party members, enemies), party formation, tiles, ASCII map loader |
+| `src/world/` | Units (party members, enemies), NPCs, party formation, tiles, area map loader |
 | `src/scenes/` | Phaser scenes: Boot (art), World (map, movement, story triggers, retry), UI (HUD), Tactics (editor), Dialog, End |
 | `src/view.ts` | Full-window pixel camera (whole-number zoom), UI font and text style |
 | `docs/TACTICS.md` | Designer-facing list of tactics, planned and implemented |
@@ -158,6 +159,18 @@ Proposed milestones **M9–M16** are listed there.
 - *Note:* beaten encounters are remembered by their group number on the map; editing the map (adding/removing
   enemy groups) can shift which groups an existing save thinks are beaten. Start a new game after big map edits.
 
+### M10 — Areas & travel ✅ *(branch `feature/areas`)*
+- The world is made of **areas** (`src/data/areas/`): outdoor areas, plus instanced interiors and dungeons.
+  Each area file has its map and a **legend** for its exits, start points, NPCs, enemies and story triggers.
+- **Exits**: stepping on one fades to the linked area, arriving at a named start point
+  (the party faces the door it came through, followers behind). The area's name shows briefly on arrival.
+- **NPCs** (`src/data/npcs.ts`): click one and the leader walks up and talks. Until M11 they just say their lines.
+- **Respawn**: every time an area loads, its enemies are back. Groups marked `unique` (the Stranger) stay beaten.
+- Small areas (houses) are centred on screen with a dark surround.
+- Placeholder content: **Marta's House** in Barrelsby (door on one of the houses), Old Marta inside,
+  a Worried Villager by the road.
+- Story triggers are now named (`forestEdge`, `meetStranger`) instead of numbered; old saves are upgraded (save v2).
+
 ## Decisions log
 
 | Date | Decision |
@@ -200,6 +213,7 @@ Proposed milestones **M9–M16** are listed there.
 | 2026-11-23 | Enemies respawn on area transitions (go into a house and out again: they're back). |
 | 2026-11-23 | Side quests have a quest log. Rewards vary per quest: XP, new characters, items. |
 | 2026-11-23 | Plan an inventory system for equipment and consumables (SYSTEMS.md §6). |
+| 2026-11-23 | *(Claude's assumption, to confirm)* Story/boss fights are marked unique and don't respawn. |
 
 ## Open questions for the designer
 
