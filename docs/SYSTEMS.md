@@ -94,7 +94,9 @@ arthurLeaves: [
 7. Does the story **branch**? Do choices just change a line or two, or can they change what happens (who joins, which fight)?
    > **Answer:** No — the main story follows one path. There will be **side quests** (see §2b).
 8. Can a story fight be **lost on purpose** (the story continues), or does losing always mean retry?
+   > **Answer:** The story only continues when the fight is won. After a loss the player can also walk away and grind first.
 9. How much cutscene do you imagine? Simple dialogue with characters walking a few steps, or more staged scenes?
+   > **Answer:** Mostly dialogue at first, with a **headshot** of the person talking.
 
 ---
 

@@ -217,6 +217,8 @@ Proposed milestones **M9–M16** are listed there.
 | 2026-11-23 | Plan an inventory system for equipment and consumables (SYSTEMS.md §6). |
 | 2026-11-23 | Story/boss fights are marked unique and don't respawn. |
 | 2026-11-23 | Interactive things (NPCs, doors) get a highlight border on mouse hover. |
+| 2026-11-23 | Story fights must be won for the story to continue. After a loss the player can retry, or walk away and grind first. |
+| 2026-11-23 | Cutscenes are mostly dialogue at first, with a headshot of whoever is talking. |
 
 ## Open questions for the designer
 
