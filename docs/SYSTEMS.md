@@ -136,10 +136,16 @@ arthurLeaves: [
 
 **Questions**
 10. Max **active party size** — always 5, or can it vary (e.g. 4, or a story section with only 2)?
+    > **Answer:** Max is always **5**. At points in the story there are fewer characters, especially early on.
 11. Do characters in the **reserve** earn XP (all, some, none)?
     > **Answer:** Yes, **50%** of the XP the active party gets.
 12. When someone leaves and later returns: same level, tactics and progress as when they left?
+    > **Answer:** Yes — they keep their level, tactics and progress.
 13. Can the party ever be just one character, and can the leader be locked by the story?
+    > **Answer:** Yes, sometimes there's just **one character**. The story doesn't depend on who is in the active party
+    > (so no leader lock needed). The **main character** is still in the background even when not in the active party.
+
+**Test character for M12:** **Vesper, the Brigand** — ranged damage. Joins through an event, to test swapping.
 
 ---
 
@@ -229,7 +235,7 @@ Each step ends with something playable, like the milestones so far.
 | M9 ✅ | **Game state & saving** | Everything else stores its data here. |
 | M10 ✅ | **Areas & travel** (2 areas from the slice + exits, NPC you can click) | The world everything else happens in. |
 | M11 ✅ | **Event scripting** (steps, triggers, flags, choices) | Story drives party changes and unlocks. |
-| M12 | **Roster & party manager** (join/leave from events, P screen) | Needs events to add/remove members. |
+| M12 ⏸ | **Roster & party manager** (join/leave from events, P screen) | Needs events to add/remove members. *On hold: the designer is building an editor in a separate branch first.* |
 | M13 | **XP & levels** | Needs saving; feeds the trees. |
 | M14 | **Progression trees** (one full tree as the example, the rest as stubs) | Needs XP; adds new tactic Actions. |
 | M15 | **Inventory & equipment** (bag, slots, consumables, gold) | Quest rewards and shops need it. |

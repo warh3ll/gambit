@@ -148,7 +148,7 @@ More classes and characters can be found later in the game.
 
 Plans and questions for the full game's systems are in [SYSTEMS.md](SYSTEMS.md): game state & saving,
 areas & travel, event scripting, party roster & manager, XP & levels, progression trees.
-Proposed milestones **M9–M16** are listed there.
+Proposed milestones **M9–M16** are listed there. **M12 is on hold** until the designer's editor work is done.
 
 ### M9 — Game state & saving ✅ *(branch `feature/game-state`)*
 - One save game holding everything that changes: area + position, leader, story flags, beaten encounters,
@@ -235,6 +235,11 @@ Proposed milestones **M9–M16** are listed there.
 | 2026-11-23 | Interactive things (NPCs, doors) get a highlight border on mouse hover. |
 | 2026-11-23 | Story fights must be won for the story to continue. After a loss the player can retry, or walk away and grind first. |
 | 2026-11-23 | Cutscenes are mostly dialogue at first, with a headshot of whoever is talking. |
+| 2026-11-23 | Active party: max 5. Some story sections have fewer characters (especially early on), sometimes just one. |
+| 2026-11-23 | Characters who leave and later return keep their level, tactics and progress. |
+| 2026-11-23 | The story doesn't depend on who is in the active party (no leader lock). The main character stays in the background even when not in the active party. |
+| 2026-11-23 | M12 test character: Vesper, the Brigand (ranged damage), joining through an event. |
+| 2026-11-23 | M12 is on hold: the designer is building an editor in a separate branch/chat first. |
 
 ## Open questions for the designer
 
