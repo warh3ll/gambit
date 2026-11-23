@@ -173,9 +173,13 @@ leave it, but can sit in the reserve like anyone else. Events can still have the
 **Questions**
 27. What does the player choose — **name, class, look**? Anything else (e.g. a background or origin that changes some
     dialogue, pronouns)?
+    > **Answer:** **Name, class and look.** Nothing else.
 28. Are the main character's **classes** the same ones other party members have, or their own set?
+    > **Answer:** They can choose from **all** classes.
 29. Can the **name** (or look) be changed later in the game?
+    > **Answer:** **No.**
 30. Is the creation screen **before** the intro, or part of it (e.g. someone in the story asks for your name)?
+    > **Answer:** *Open* — the designer will decide once the story is written. (Build it so either works.)
 
 ---
 
