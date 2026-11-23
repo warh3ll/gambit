@@ -85,8 +85,25 @@ arthurLeaves: [
 
 **Questions**
 7. Does the story **branch**? Do choices just change a line or two, or can they change what happens (who joins, which fight)?
+   > **Answer:** No — the main story follows one path. There will be **side quests** (see §2b).
 8. Can a story fight be **lost on purpose** (the story continues), or does losing always mean retry?
 9. How much cutscene do you imagine? Simple dialogue with characters walking a few steps, or more staged scenes?
+
+---
+
+## 2b. Side quests
+
+**Proposal**
+- A side quest is a set of events plus a few flags: *started → steps → done*.
+  It's built on the event system, with nothing new underneath.
+- A **quest log** screen (key **Q**) lists active and finished quests, with the current step as one line of text.
+- Quests are defined in data:
+  - an id, a title, and a line of text per step;
+  - rewards (XP, a new character, an item later on).
+
+**Questions**
+- Do you want a quest log, or should quests only live in dialogue?
+- Rewards: XP? New characters? Items/equipment (would need an inventory, which isn't planned yet)?
 
 ---
 
@@ -109,6 +126,7 @@ arthurLeaves: [
 **Questions**
 10. Max **active party size** — always 5, or can it vary (e.g. 4, or a story section with only 2)?
 11. Do characters in the **reserve** earn XP (all, some, none)?
+    > **Answer:** Yes, **50%** of the XP the active party gets.
 12. When someone leaves and later returns: same level, tactics and progress as when they left?
 13. Can the party ever be just one character, and can the leader be locked by the story?
 
@@ -117,13 +135,15 @@ arthurLeaves: [
 ## 4. XP & levels
 
 **Proposal**
-- Each enemy gives XP when beaten. After a won fight, XP is split among the active party, and fallen characters get it too.
+- Each enemy gives XP when beaten. After a won fight, every active party member gets the **full** XP
+  (fallen ones too), and every reserve member gets **50%**.
 - Levelling up raises HP and attack power a little, and gives **1 progression point**.
 - A short "Level up!" note over the character, plus in the fight result.
 - Levels, XP per level and stat growth live in a data file per class, easy to rebalance.
 
 **Questions**
 14. XP per **character** (each levels on their own), or a **shared party level**?
+    > **Answer:** Per character. Active party gets full XP, reserve (sidelines) gets 50%.
 15. A rough **level cap** for the full game (10? 20? 50?) and how long the game is meant to be?
 16. Do stats grow automatically per level, or only through the progression tree?
 
@@ -137,7 +157,7 @@ arthurLeaves: [
   - **Upgrade an action**: more damage, shorter cooldown, longer duration, an extra effect (Firebolt burns).
   - **Stat boost**: max HP, attack, speed.
   - **Passive**: e.g. "Ward also heals 10 HP".
-  - **More tactic rows**: start with fewer than 10 rows and unlock the rest. This makes "programming" a progression of its own.
+  - ~~**More tactic rows**~~ — not part of trees (see answer to 19–20).
 - Nodes have prerequisites (a tree, not a flat list) and maybe a minimum level.
 - Tree screen (from the party manager or a key): nodes as icons, click to unlock, hover for details.
 - Trees are data files, `src/data/progression/<character>.ts`: nodes, costs, links, effects.
@@ -147,6 +167,8 @@ arthurLeaves: [
 18. Can points be **refunded / respec'd**? Free, at a cost, or never?
 19. **Tactic Types** (*HP below 50%*, *Targeting me*…): unlocked in trees too, found in the world, or all available from the start?
 20. Tactic **rows**: start with all 10, or unlock them over time?
+    > **Answer (19–20):** Trees let each character **learn new skills or upgrade existing ones** — they do **not**
+    > unlock tactic Types or Targets. *(Still open: are all Types/Targets and all 10 rows available from the start?)*
 21. Should a tree branch so two players' Hynes can play differently (pick A *or* B), or is it a path everyone completes eventually?
 
 ---

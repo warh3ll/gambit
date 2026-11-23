@@ -178,6 +178,9 @@ Proposed milestones **M9–M14** are listed there; they start once the designer 
 | 2026-11-23 | Art: Claude provides placeholders until the designer replaces them with real art (art is the main bottleneck). |
 | 2026-11-23 | The final fight should be winnable with the default tactics (there aren't enough tactics yet to demand more). Enemy Acolytes don't heal, for now. |
 | 2026-11-23 | M7 (art & audio) and M8 (itch release) are on hiatus; art is updated as the designer makes it. Next up: game systems (SYSTEMS.md). |
+| 2026-11-23 | The main story follows one path (no branching); there will be side quests. |
+| 2026-11-23 | XP is per character: the active party gets full XP from a fight, characters on the sidelines get 50%. |
+| 2026-11-23 | Progression trees teach new skills or upgrade existing ones per character. They don't unlock tactic Types or Targets. |
 
 ## Open questions for the designer
 
