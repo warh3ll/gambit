@@ -271,6 +271,7 @@ next to the game tab. It saves straight into the project's data files, and the g
 | 2026-11-23 | Active party: max 5. Some story sections have fewer characters (especially early on), sometimes just one. |
 | 2026-11-23 | Characters who leave and later return keep their level, tactics and progress. |
 | 2026-11-23 | The story doesn't depend on who is in the active party (no leader lock). The main character stays in the background even when not in the active party. |
+| 2026-11-23 | The player creates the main character at the start of a new game (later). They can be left out of the active party, but some events still have them speak in dialogue. |
 | 2026-11-23 | M12 test character: Vesper, the Brigand (ranged damage), joining through an event. |
 | 2026-11-23 | M12 is on hold: the designer is building an editor in a separate branch/chat first. |
 | 2026-11-23 | World building happens in our own visual editor (the Gambit Editor, in the dev server) rather than external tools: event & dialogue editor first (E1), then a map painter (E2). |

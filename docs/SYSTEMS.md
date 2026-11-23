@@ -144,6 +144,10 @@ arthurLeaves: [
 13. Can the party ever be just one character, and can the leader be locked by the story?
     > **Answer:** Yes, sometimes there's just **one character**. The story doesn't depend on who is in the active party
     > (so no leader lock needed). The **main character** is still in the background even when not in the active party.
+    >
+    > **Main character:** the player will **create** the main character when a new game starts (later). Like anyone else,
+    > they can be left out of the active party. "In the background" means certain events can still have them speak in
+    > dialogue even when they aren't in the active party. *(Assumed, to confirm: the story never removes them from the roster.)*
 
 **Test character for M12:** **Vesper, the Brigand** — ranged damage. Joins through an event, to test swapping.
 
