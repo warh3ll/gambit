@@ -5,6 +5,7 @@
   instead of guessing, and record the answer in `docs/PLAN.md` (Decisions log).
 - Read `docs/PLAN.md` at the start of a session — the designer edits it between sessions.
 - Work on a branch (`feature/…`, `setup/…`, `fix/…`). Never merge to `main` or push without the designer's go-ahead.
+  After a branch is merged into `main`, delete it (`git branch -d`, and on GitHub too if it was pushed).
 
 ## Project
 - Phaser 4 + TypeScript + Vite. `npm run dev`, `npm run build` (typecheck + build).
