@@ -7,6 +7,7 @@ import { ID_PATTERN, freshId, hex, speakers, stepText } from './steps';
 import { type Content, allOwners, commit, useStore, walkSteps } from './store';
 import { renameEventRefs, renameNpcRefs } from './map/edit';
 import { MapPage } from './map/MapPanels';
+import { TreePage } from './trees/TreePanels';
 import { AutoText, Headshot, NpcSprite, RenameField, renameKey } from './ui';
 import type { Problem } from './validate';
 import { WORLD, eventUses, npcAreas } from './world';
@@ -135,6 +136,7 @@ export function Page({ onTest }: { onTest: () => void }) {
   const { content } = useStore();
   if (nav.tab === 'speakers') return <SpeakersPage />;
   if (nav.tab === 'map') return <MapPage />;
+  if (nav.tab === 'trees') return <TreePage />;
   if (nav.tab === 'events') {
     if (nav.id === END_SCREEN_ID) return <EndScreenPage />;
     if (nav.id && content.story.events[nav.id]) return <EventPage id={nav.id} onTest={onTest} />;

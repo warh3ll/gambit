@@ -6,6 +6,7 @@ import { useEffect, useState } from 'preact/hooks';
 import type { AreaFile } from '../data/areas/types';
 import type { NpcFile } from '../data/npcs';
 import type { StoryFile } from '../data/story';
+import type { TreesFile } from '../data/trees';
 import type { Step } from '../game/script';
 
 export interface Content {
@@ -13,8 +14,9 @@ export interface Content {
   npcs: NpcFile;
   /** Area id → area (src/data/areas/<id>.json). */
   areas: Record<string, AreaFile>;
+  trees: TreesFile;
 }
-/** A content file: 'story', 'npcs', or 'area:<id>'. */
+/** A content file: 'story', 'npcs', 'trees', or 'area:<id>'. */
 export type FileKey = string;
 
 /** The file on disk for a content key. */
@@ -23,7 +25,7 @@ export const fileName = (key: FileKey) =>
 
 /** Every file the content consists of, key → data. */
 function filesOf(c: Content): Record<FileKey, unknown> {
-  const out: Record<FileKey, unknown> = { story: c.story, npcs: c.npcs };
+  const out: Record<FileKey, unknown> = { story: c.story, npcs: c.npcs, trees: c.trees };
   for (const [id, a] of Object.entries(c.areas)) out[`area:${id}`] = orderedArea(a);
   return out;
 }
@@ -57,7 +59,7 @@ interface State {
   pendingDraft: Content | null;
 }
 
-const empty: Content = { story: { newGame: { area: '' }, speakers: {}, endScreen: { title: '', text: '' }, events: {} }, npcs: {}, areas: {} };
+const empty: Content = { story: { newGame: { area: '' }, speakers: {}, endScreen: { title: '', text: '' }, events: {} }, npcs: {}, areas: {}, trees: { newActions: {}, classes: {} } };
 let state: State = {
   status: 'loading',
   content: empty,
@@ -150,7 +152,7 @@ export async function load() {
     const files = await fetchContent();
     const areas: Content['areas'] = {};
     for (const [key, f] of Object.entries(files)) if (key.startsWith('area:') && f) areas[key.slice(5)] = f.data as AreaFile;
-    const content = { story: files.story!.data, npcs: files.npcs!.data, areas } as Content;
+    const content = { story: files.story!.data, npcs: files.npcs!.data, trees: files.trees!.data, areas } as Content;
     const saved: Record<FileKey, string> = {};
     const hashes: Record<FileKey, string> = {};
     for (const [key, data] of Object.entries(filesOf(content))) {
@@ -247,6 +249,7 @@ function offerDraft() {
   }
   if (!draft?.content?.story || !draft.content.npcs) return;
   draft.content.areas ??= {}; // drafts from before the map painter
+  draft.content.trees ??= state.content.trees; // drafts from before the tree editor
   if (!differing(draft.content, state.saved).length) return clearDraft();
   const keys = new Set([...Object.keys(draft.hashes ?? {}), ...Object.keys(state.hashes)]);
   const sameBase = [...keys].every((k) => (draft.hashes?.[k] ?? NO_FILE) === (state.hashes[k] ?? NO_FILE));

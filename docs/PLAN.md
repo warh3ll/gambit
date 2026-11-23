@@ -45,6 +45,7 @@ refining those tactics.
 | `src/systems/EventRunner.ts` | Runs event steps one after another |
 | `src/data/areas/` | **Areas**: one JSON file per area (the file name is the area's id), made in the Gambit Editor's Map tab; `index.ts` loads them all |
 | `src/data/npcs.json` | **NPCs**: name, look, conversation. Made in the Gambit Editor; `npcs.ts` loads it |
+| `src/data/trees.json` | **Skill trees**, one per class, and new actions planned in them. Made in the Gambit Editor (Trees tab); `trees.ts` has the shape |
 | `src/data/art.ts` | **Replacing placeholder art**: list real PNGs here, key → file in `public/art/` |
 | `src/systems/TacticEngine.ts` | Picks which tactic row fires (top to bottom, first match) |
 | `src/systems/Pathfinder.ts` | A* pathfinding on the tile grid + path smoothing |
@@ -243,11 +244,21 @@ next to the game tab. It saves straight into the project's data files, and the g
   4 tiles of each other; the painter outlines each fight. The door picture is its own tile (`D`) now; an exit is
   just where stepping leads away, so paint a door (or anything) under it. Existing saves keep working (no change).
 
-### E3 — Skill tree editor *(with M14)*
-- One tree per class, laid out tier by tier. Add nodes to a tier, link each node to the nodes it follows on the tier
-  before, and set what it does (new action, upgrade, stat boost, passive) and its minimum level.
-- Preview a route: click through picks and see which nodes open up next.
-- Saves `src/data/trees.json`. Problems list: nodes nothing leads to, empty tiers, unknown actions.
+### E3 — Skill tree editor ✅ *(branch `feature/skill-tree-editor`; the game uses trees from M14)*
+- **Trees tab**: one tree per class (the party's classes, plus "+ New class tree" for a class nobody has yet).
+  Tiers run left to right, each labelled with the level it opens at (tier 1 at level 2, tier 2 at level 3, …).
+- **Nodes**: "+ Add node" under a tier, "+ Add tier" at the end. Click a node to edit its name, the text the player
+  reads, a minimum level, which nodes it follows, and its **effects**: learn an action, upgrade an action (power,
+  cooldown, duration, range), raise a stat (max HP, attack, speed), or something special described in words.
+  Move nodes up/down or to another tier; remove a tier with its ✕.
+- **Linking**: drag from the ● on a node's right edge to a node on the next tier (again to unlink), or tick
+  "Follows" in the panel.
+- **New actions** can be planned right in a tree ("+ New action…" when picking an action): name and description.
+  They and the special effects are marked *to build* and listed in the **To build** card. That's my list for M14.
+- **▶ Try a route**: pick a level and click through as a player would; green nodes can be picked next.
+- **Problems**: nodes nothing leads to, routes that end early, empty tiers, unknown actions, upgrading an action
+  the class can't know yet, more tiers than points by the level cap, and so on.
+- Saves `src/data/trees.json`. A small placeholder Cleric tree is in there as an example; change or replace it.
 
 ## Decisions log
 
@@ -316,6 +327,8 @@ next to the game tab. It saves straight into the project's data files, and the g
 | 2026-11-23 | Story events and NPCs are stored as JSON files that the editor reads and writes (`story.json`, `npcs.json`). |
 | 2026-11-23 | Areas are JSON files too, one per area (`src/data/areas/<id>.json`), made with the map painter (E2). Tiles stay one character per tile; everything placed on the map is listed with its position. Story triggers are rectangles. |
 | 2026-11-23 | Saving a map in the editor updates the running game (the area reloads in place when calm). "Play from here" puts the party on any tile. |
+| 2026-11-23 | Skill trees can plan things the game can't do yet: new actions (name + description) and special effects in words. They're marked "to build" and implemented in M14. Number tweaks (power, cooldown, duration, range, stats) need no code per node. |
+| 2026-11-23 | The tree editor lays tiers out left to right. |
 
 ## Open questions for the designer
 

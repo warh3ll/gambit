@@ -5,7 +5,7 @@
 import { useEffect, useState } from 'preact/hooks';
 import type { ListPath, Owner } from './store';
 
-export type Tab = 'events' | 'npcs' | 'speakers' | 'map';
+export type Tab = 'events' | 'npcs' | 'speakers' | 'map' | 'trees';
 export interface SelectedStep {
   owner: Owner;
   path: ListPath;
@@ -17,7 +17,7 @@ interface Nav {
   step: SelectedStep | null;
 }
 
-const TABS: Tab[] = ['events', 'npcs', 'speakers', 'map'];
+const TABS: Tab[] = ['events', 'npcs', 'speakers', 'map', 'trees'];
 
 function fromHash(): Nav {
   const [tab, id] = decodeURIComponent(location.hash.slice(1)).split('/');

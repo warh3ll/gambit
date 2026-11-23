@@ -9,6 +9,7 @@ import { type Owner, commit, getState, listAt, rootSteps, useStore, walkSteps } 
 import { Card, SpeakerFace } from './ui';
 import type { Problem } from './validate';
 import { setUi } from './map/state';
+import { getTreeUi, setTreeUi } from './trees/state';
 import { areaById } from './world';
 
 /** The step list open on the page, if any. */
@@ -162,6 +163,11 @@ export function ProblemsCard({ problems }: { problems: Problem[] }) {
       if (p.at) setUi({ focus: p.at });
       return;
     }
+    if (p.tree) {
+      go('trees', p.tree.cls || getNav().id);
+      setTreeUi({ node: p.tree.node ?? null, route: { ...getTreeUi().route, on: false } });
+      return;
+    }
     if (!p.owner) return;
     const step: SelectedStep | null = p.step ? { owner: p.owner, path: p.step.path, index: p.step.index } : null;
     goOwner(p.owner, step);
@@ -175,7 +181,7 @@ export function ProblemsCard({ problems }: { problems: Problem[] }) {
       {!problems.length && <p class="muted small">Nothing found. Every speaker, flag, fight and area checks out.</p>}
       <ul class="problem-list">
         {problems.map((p, i) => (
-          <li key={i} class={`problem ${p.level} ${p.owner || p.area ? 'link' : ''}`} onClick={() => open(p)}>
+          <li key={i} class={`problem ${p.level} ${p.owner || p.area || p.tree?.cls ? 'link' : ''}`} onClick={() => open(p)}>
             <span class="problem-icon">{p.level === 'error' ? '●' : '▲'}</span>
             <span>
               {p.text}

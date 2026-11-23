@@ -1,0 +1,93 @@
+{
+  "newActions": {
+    "smite": { "name": "Smite", "text": "A holy strike on one enemy; hits harder than Attack, 6 s cooldown." },
+    "groupHeal": { "name": "Group Heal", "text": "Heals every ally within range a little; 10 s cooldown." }
+  },
+  "classes": {
+    "cleric": {
+      "tiers": [
+        [
+          {
+            "id": "mend",
+            "name": "Mend",
+            "text": "Heal restores more HP.",
+            "follows": [],
+            "effects": [
+              { "kind": "upgrade", "action": "heal", "stat": "power", "amount": 10 }
+            ]
+          },
+          {
+            "id": "smite",
+            "name": "Smite",
+            "text": "Learn Smite, a holy strike.",
+            "follows": [],
+            "effects": [{ "kind": "learn", "action": "smite" }]
+          },
+          {
+            "id": "devotion",
+            "name": "Devotion",
+            "text": "More max HP.",
+            "follows": [],
+            "effects": [{ "kind": "stat", "stat": "maxHp", "amount": 30 }]
+          }
+        ],
+        [
+          {
+            "id": "quickHands",
+            "name": "Quick Hands",
+            "text": "Heal is ready sooner.",
+            "follows": ["mend"],
+            "effects": [
+              { "kind": "upgrade", "action": "heal", "stat": "cooldown", "amount": -0.5 }
+            ]
+          },
+          {
+            "id": "groupHeal",
+            "name": "Group Heal",
+            "text": "Learn Group Heal: heals everyone nearby.",
+            "follows": ["mend", "devotion"],
+            "effects": [{ "kind": "learn", "action": "groupHeal" }]
+          },
+          {
+            "id": "holyFire",
+            "name": "Holy Fire",
+            "text": "Smite hits harder and burns.",
+            "follows": ["smite"],
+            "effects": [
+              { "kind": "upgrade", "action": "smite", "stat": "power", "amount": 8 },
+              { "kind": "special", "text": "Smite sets the target on fire: 4 damage per second for 3 s." }
+            ]
+          }
+        ],
+        [
+          {
+            "id": "renew",
+            "name": "Renew",
+            "text": "Heal keeps healing for a while.",
+            "follows": ["quickHands"],
+            "effects": [
+              { "kind": "special", "text": "Heal also restores 5 HP per second for 4 s." }
+            ]
+          },
+          {
+            "id": "sanctuary",
+            "name": "Sanctuary",
+            "text": "Group Heal reaches further.",
+            "follows": ["groupHeal"],
+            "effects": [
+              { "kind": "upgrade", "action": "groupHeal", "stat": "range", "amount": 32 }
+            ]
+          },
+          {
+            "id": "zeal",
+            "name": "Zeal",
+            "text": "Hit harder with every weapon.",
+            "minLevel": 5,
+            "follows": ["holyFire", "groupHeal"],
+            "effects": [{ "kind": "stat", "stat": "attack", "amount": 4 }]
+          }
+        ]
+      ]
+    }
+  }
+}

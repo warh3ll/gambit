@@ -4,7 +4,7 @@
  *   GET  /__editor/content  → every content file: { files: { story: { data, hash }, 'area:martaHouse': … } }
  *   POST /__editor/save     ← { files: { story: { data, base } } }  (base = the hash the editor loaded)
  *
- * Only these files can be read or written: story.json, npcs.json, and the areas (src/data/areas/<id>.json, key
+ * Only these files can be read or written: story.json, npcs.json, trees.json, and the areas (src/data/areas/<id>.json, key
  * 'area:<id>'). Saving an area with `data: null` deletes its file; a new area is saved with base NO_FILE.
  * A save is refused (409) if a file changed on disk since the editor loaded it (e.g. edited by hand), so nothing
  * gets overwritten by accident.
@@ -23,6 +23,7 @@ import { TILE_CHARS } from '../src/world/tiles.ts';
 const CONTENT_FILES: Record<string, string> = {
   story: 'src/data/story.json',
   npcs: 'src/data/npcs.json',
+  trees: 'src/data/trees.json',
 };
 const AREA_DIR = 'src/data/areas';
 const AREA_ID = /^[A-Za-z][A-Za-z0-9_]*$/;
@@ -118,6 +119,12 @@ function checkShape(key: string, data: unknown): string | null {
   if (key === 'npcs') {
     for (const [id, npc] of Object.entries(data)) {
       if (!isObj(npc) || typeof npc.name !== 'string' || !Array.isArray(npc.talk)) return `NPC "${id}" needs a name and talk steps`;
+    }
+  }
+  if (key === 'trees') {
+    if (!isObj(data.newActions) || !isObj(data.classes)) return '"newActions" and "classes" must be objects';
+    for (const [id, tree] of Object.entries(data.classes)) {
+      if (!isObj(tree) || !Array.isArray(tree.tiers) || tree.tiers.some((t) => !Array.isArray(t))) return `the tree of "${id}" needs a list of tiers`;
     }
   }
   if (key.startsWith('area:')) {

@@ -243,7 +243,7 @@ leave it, but can sit in the reserve like anyone else. Events can still have the
   (Some tiers could also need a minimum level.)
 - **Respec:** clears a character's picks and gives the points back. The first respec is free; after that it costs gold
   at a respec NPC (who and where is decided later). The save tracks whether the free respec has been used, per character.
-- Trees are stored as a JSON file made with the Gambit Editor (`src/data/trees.json`), like events.
+- Trees are stored as a JSON file made with the Gambit Editor (`src/data/trees.json`, Trees tab), like events. ✅ (E3)
   See **E3 — Skill tree editor** in PLAN.md.
 
 ---

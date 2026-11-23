@@ -5,6 +5,7 @@
 import type { TilePos } from '../data/areas/types';
 import type { Step } from '../game/script';
 import { checkAreas } from './map/check';
+import { checkTrees } from './trees/model';
 import type { Selection } from './map/state';
 import { endsEvent, speakers } from './steps';
 import { type Content, type ListPath, type Owner, allOwners, walkSteps } from './store';
@@ -24,6 +25,8 @@ export interface Problem {
   area?: string;
   thing?: Selection;
   at?: TilePos;
+  /** A skill tree problem: the class (empty: not about one tree) and the node to select. */
+  tree?: { cls: string; node?: string };
 }
 
 /** Flags set anywhere (by events or by the game itself). */
@@ -117,6 +120,7 @@ export function validate(c: Content): Problem[] {
   // What the maps expect.
   if (!c.story.events.intro) out.push({ level: 'error', missingEvent: 'intro', text: 'There is no “intro” event (it plays when a new game starts).' });
   out.push(...checkAreas(c));
+  out.push(...checkTrees(c));
 
   // Speaker ids must be unique across party, NPCs and other speakers.
   const seen = new Map<string, number>();

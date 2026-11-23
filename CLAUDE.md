@@ -17,9 +17,9 @@
   (~360 game px tall). Lay out UI in game pixels from the view size, never fixed screen sizes. 16px tiles.
 - All tactic building blocks (Actions, Targets, Types) live in `src/data/tactics.ts`.
   Keep `docs/TACTICS.md` in sync when adding or changing one.
-- Designer-editable content: story events in `src/data/story.json`, NPCs in `src/data/npcs.json` and areas in
-  `src/data/areas/<id>.json`, all made with the Gambit Editor (http://localhost:8080/editor.html; code in
-  `src/editor/`, the map painter in `src/editor/map/`, saving via `tools/editorPlugin.ts`). Real art overrides in
+- Designer-editable content: story events in `src/data/story.json`, NPCs in `src/data/npcs.json`, skill trees in
+  `src/data/trees.json` and areas in `src/data/areas/<id>.json`, all made with the Gambit Editor (http://localhost:8080/editor.html; code in
+  `src/editor/`, the map painter in `src/editor/map/`, the tree editor in `src/editor/trees/`, saving via `tools/editorPlugin.ts`). Real art overrides in
   `src/data/art.ts`. Keep these readable for a non-programmer. The editor lays the JSON out one step per line; keep
   that layout when editing it by hand.
 - Adding a map tile: `Tile` and `TILE_CHARS` in `src/world/tiles.ts` (its map character), and its placeholder in

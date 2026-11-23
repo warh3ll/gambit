@@ -9,6 +9,8 @@ import { useEffect, useMemo, useState } from 'preact/hooks';
 import { useGame } from './gameLink';
 import { type Tab, getNav, go, selectStep, useNav } from './nav';
 import { MapSide, MapSidebar } from './map/MapPanels';
+import { classList } from './trees/model';
+import { TreeSide, TreeSidebar } from './trees/TreePanels';
 import { Page, Sidebar } from './pages';
 import { Preview, SidePanel, type TestResult, testInGame } from './side';
 import {
@@ -34,10 +36,13 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'npcs', label: 'NPCs' },
   { id: 'speakers', label: 'Speakers' },
   { id: 'map', label: 'Map' },
+  { id: 'trees', label: 'Trees' },
 ];
 
 /** The area last open on the Map tab, to return to it. */
 let lastArea: string | null = null;
+/** The class last open on the Trees tab. */
+let lastClass: string | null = null;
 
 function App() {
   const state = useStore();
@@ -51,6 +56,7 @@ function App() {
 
   useEffect(() => setTest(null), [nav.tab, nav.id]);
   if (nav.tab === 'map' && nav.id && state.content.areas[nav.id]) lastArea = nav.id;
+  if (nav.tab === 'trees' && nav.id) lastClass = nav.id;
 
   // Keyboard: Ctrl+S save, Ctrl+Z / Ctrl+Y (or Ctrl+Shift+Z) undo / redo, Delete removes the selected step.
   useEffect(() => {
@@ -102,7 +108,7 @@ function App() {
         </div>
         <nav class="tabs">
           {TABS.map((t) => (
-            <button key={t.id} class={`tab ${nav.tab === t.id ? 'active' : ''}`} onClick={() => (t.id === 'map' ? go('map', lastArea ?? state.content.story.newGame.area) : go(t.id))}>
+            <button key={t.id} class={`tab ${nav.tab === t.id ? 'active' : ''}`} onClick={() => (t.id === 'map' ? go('map', lastArea ?? state.content.story.newGame.area) : t.id === 'trees' ? go('trees', lastClass ?? classList(state.content)[0]?.id) : go(t.id))}>
               {t.label}
             </button>
           ))}
@@ -138,6 +144,7 @@ function App() {
       <div class="body">
         {(nav.tab === 'events' || nav.tab === 'npcs') && <Sidebar key={nav.tab} problems={problems} />}
         {nav.tab === 'map' && <MapSidebar problems={problems} />}
+        {nav.tab === 'trees' && <TreeSidebar problems={problems} />}
         <main
           class="main"
           onClick={(e) => {
@@ -148,7 +155,13 @@ function App() {
           <Page onTest={async () => setTest(await testInGame())} />
           <Preview />
         </main>
-        {nav.tab === 'map' ? <MapSide problems={problems} /> : <SidePanel problems={problems} test={test} setTest={setTest} />}
+        {nav.tab === 'map' ? (
+          <MapSide problems={problems} />
+        ) : nav.tab === 'trees' ? (
+          <TreeSide problems={problems} />
+        ) : (
+          <SidePanel problems={problems} test={test} setTest={setTest} />
+        )}
       </div>
 
       <datalist id="flag-names">
