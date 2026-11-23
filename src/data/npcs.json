@@ -52,5 +52,12 @@
         ]
       }
     ]
+  },
+  "bridgeKeeper": {
+    "name": "Bridgekeeper",
+    "color": "#bf8636",
+    "talk": [
+      { "do": "say", "speaker": "bridgeKeeper", "text": "I've been seeing a lot of people go into the forest lately, they look... enchanted somehow? Last night I saw a band of thugs entering as well. Is this connected to people disappearing? They gave me the creeps." }
+    ]
   }
 }
