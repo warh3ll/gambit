@@ -3,8 +3,9 @@ import { TILE_SIZE } from '../config';
 import { ENEMIES } from '../data/enemies';
 import { NPCS } from '../data/npcs';
 import { PARTY } from '../data/party';
-import { HEADSHOT_SIZE } from './DialogScene';
+import { SPEAKERS } from '../data/story';
 import { ART_FILES } from '../data/art';
+import { HEADSHOT_SIZE, type Painter, paintHeadshot, paintNpc } from '../world/placeholderArt';
 import { TILE_COUNT, Tile } from '../world/tiles';
 
 export const PORTRAIT_SIZE = 22;
@@ -29,6 +30,7 @@ export class BootScene extends Phaser.Scene {
     const make = (key: string, w: number, h: number) => {
       if (!this.textures.exists(key)) g.generateTexture(key, w, h);
     };
+    const paint: Painter = (color, alpha, x, y, w, h) => g.fillStyle(color, alpha).fillRect(x, y, w, h);
 
     // Characters: coloured body with outline and eyes.
     for (const c of PARTY) {
@@ -52,10 +54,7 @@ export class BootScene extends Phaser.Scene {
     // NPCs: coloured body with a lighter head band.
     for (const n of Object.values(NPCS)) {
       g.clear();
-      g.fillStyle(ink).fillRect(0, 0, 12, 16);
-      g.fillStyle(n.color).fillRect(1, 1, 10, 14);
-      g.fillStyle(0xe8dcc8).fillRect(1, 1, 10, 3);
-      g.fillStyle(ink).fillRect(3, 5, 2, 2).fillRect(7, 5, 2, 2);
+      paintNpc(paint, n.color);
       make(`npc-${n.id}`, 12, 16);
     }
 
@@ -87,25 +86,14 @@ export class BootScene extends Phaser.Scene {
     }
 
     // Headshots for dialogue: a bigger face per speaker.
-    const H = HEADSHOT_SIZE;
-    const headshot = (key: string, color: number, hood = false) => {
+    const headshot = (id: string, color: number) => {
       g.clear();
-      g.fillStyle(0x2a2438).fillRect(0, 0, H, H);
-      if (hood) {
-        g.fillStyle(0x1a1424).fillRect(6, 4, H - 12, H - 4);
-        g.fillStyle(0x4a3a5a).fillRect(11, 12, H - 22, H - 12);
-        g.fillStyle(0xc58cff).fillRect(14, 20, 4, 3).fillRect(H - 18, 20, 4, 3);
-      } else {
-        g.fillStyle(color).fillRect(8, 8, H - 16, H - 8); // head and shoulders
-        g.fillStyle(0x000000, 0.15).fillRect(8, 30, H - 16, H - 30);
-        g.fillStyle(ink).fillRect(13, 18, 4, 5).fillRect(H - 17, 18, 4, 5);
-        g.fillStyle(ink, 0.6).fillRect(17, 27, H - 34, 2);
-      }
-      make(key, H, H);
+      paintHeadshot(paint, id, color);
+      make(`headshot-${id}`, HEADSHOT_SIZE, HEADSHOT_SIZE);
     };
-    for (const c of PARTY) headshot(`headshot-${c.id}`, c.color);
-    for (const n of Object.values(NPCS)) headshot(`headshot-${n.id}`, n.color);
-    headshot('headshot-stranger', 0, true);
+    for (const c of PARTY) headshot(c.id, c.color);
+    for (const n of Object.values(NPCS)) headshot(n.id, n.color);
+    for (const [id, s] of Object.entries(SPEAKERS)) headshot(id, parseInt(s.color.replace('#', ''), 16));
 
     // Portrait frames: normal and leader.
     for (const [key, color] of [

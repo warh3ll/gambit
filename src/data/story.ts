@@ -1,56 +1,66 @@
 /**
- * STORY — the story events of the game, written with the steps from src/game/script.ts.
+ * STORY — the story events of the game.
  *
- * PLACEHOLDER WRITING: the designer owns the story; rewrite anything here.
+ * The content lives in story.json, next to this file. Edit it with the Gambit Editor:
+ * run `npm run dev` and open http://localhost:8080/editor.html (Events tab).
  *
  * Where events start:
  *  - 'intro' plays once when a new game starts.
  *  - Story triggers: a map character in an area's legend, e.g. `'1': { trigger: 'forestEdge' }`.
  *    A trigger's event plays once (when the leader steps on it), and is remembered once it has finished.
  *  - Fights: an area's `encounters` can name an event to play when that fight is won (`onWin`).
- *  - Areas: an area's `onEnter` event plays every time the party arrives (use ifFlag to play it once).
- *  - NPCs: their `talk` steps in src/data/npcs.ts play each time you talk to them.
+ *  - Areas: an area's `onEnter` event plays every time the party arrives (use an "if flag" step to play it once).
+ *  - NPCs: their conversation (npcs.json) plays each time you talk to them.
+ *
+ * In dev, saving story.json updates the running game straight away: the next line you see uses the new text.
  */
-import { type Step, endGame, fight, narrate, say } from '../game/script';
+import type { Step } from '../game/script';
+import storyFile from './story.json';
 
-/** Names for speakers who aren't party members or NPCs. */
-export const SPEAKER_NAMES: Record<string, string> = {
-  stranger: 'The Stranger',
-};
+/** A speaker who isn't a party member or an NPC (e.g. the Stranger). */
+export interface SpeakerDef {
+  name: string;
+  /** Placeholder headshot colour, '#rrggbb', until real art exists (src/data/art.ts). */
+  color: string;
+}
 
-export const EVENTS: Record<string, Step[]> = {
-  intro: [
-    narrate('For weeks, a stranger has been seen on the edge of Barrelsby.'),
-    narrate(
-      'He promises the townsfolk riches if they follow him into the woods. Some already have, and none have come back.',
-    ),
-    say('yasmi', 'Then we go to him. East road, into the woods.'),
-    narrate('Click the ground to walk.   Press T to set the party\'s tactics. Fights play out on their own.'),
-  ],
+/** The shape of story.json. */
+export interface StoryFile {
+  speakers: Record<string, SpeakerDef>;
+  endScreen: { title: string; text: string };
+  events: Record<string, Step[]>;
+}
 
-  forestEdge: [
-    narrate('The road narrows as the trees close in. Fresh footprints lead east, many of them.'),
-    say('hyne', 'Townsfolk. They walked this way willingly.'),
-  ],
-
-  meetStranger: [
-    narrate('Ahead, in a clearing, a tall figure in a dark coat waits as if he expected company.'),
-    say('stranger', 'More visitors from Barrelsby. Have you come to get rich, too?'),
-    say('yasmi', 'We\'ve come to bring our people home.'),
-    say('stranger', 'Then you\'ll have to take them from me.'),
-    fight('stranger'),
-  ],
-
-  // Plays when the 'stranger' fight in barrelsbyRoad is won (see that area's `encounters`).
-  strangerDefeated: [
-    narrate('The Stranger falls. Deeper in the woods, voices: the missing townsfolk, dazed but alive.'),
-    say('oxleth', 'He wasn\'t working alone. Someone gave him that power.'),
-    endGame(),
-  ],
-};
-
+export const EVENTS: Record<string, Step[]> = {};
+export const SPEAKERS: Record<string, SpeakerDef> = {};
 /** The end screen after the slice. */
-export const END_SCREEN = {
-  title: 'End of the demo',
-  text: 'Thanks for playing! The road from Barrelsby goes on…',
-};
+export const END_SCREEN = { title: '', text: '' };
+
+/** Fills the exports in place, so everything holding them sees new content after a live update. */
+function apply(file: StoryFile) {
+  replaceAll(EVENTS, file.events);
+  replaceAll(SPEAKERS, file.speakers);
+  Object.assign(END_SCREEN, file.endScreen);
+}
+
+function replaceAll<T>(target: Record<string, T>, source: Record<string, T>) {
+  for (const k of Object.keys(target)) delete target[k];
+  Object.assign(target, source);
+}
+
+apply(storyFile as unknown as StoryFile);
+
+if (import.meta.hot) {
+  import.meta.hot.accept('./story.json', (mod) => {
+    const next = mod?.default as StoryFile | undefined;
+    if (!next) return;
+    // New speakers or looks need new placeholder art, which is made at startup: reload the game for those.
+    if (looks(next.speakers) !== looks(SPEAKERS)) return import.meta.hot?.invalidate('speakers changed');
+    apply(next);
+    console.info('[story] updated from story.json');
+  });
+}
+
+function looks(speakers: Record<string, SpeakerDef>) {
+  return JSON.stringify(Object.entries(speakers).map(([id, s]) => [id, s.color]));
+}

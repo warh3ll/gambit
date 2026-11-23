@@ -5,6 +5,7 @@ import { getArea } from '../data/areas';
 import type { AreaDef } from '../data/areas/types';
 import { NPCS } from '../data/npcs';
 import { EVENTS } from '../data/story';
+import type { Step } from '../game/script';
 import { session } from '../game/session';
 import { CombatManager, type CombatResult } from '../systems/CombatManager';
 import { CombatSystem } from '../systems/CombatSystem';
@@ -326,6 +327,27 @@ export class WorldScene extends Phaser.Scene {
     // Remembered once the event has finished, so reloading mid-dialogue plays it again.
     void this.runEvent(id, () => session.setFlag(flag));
     return true;
+  }
+
+  // ── Gambit Editor (dev only, see src/game/editorBridge.ts) ──
+
+  /** The area the party is in, for the editor's "Test in game". */
+  get currentArea(): AreaDef {
+    return this.area;
+  }
+
+  /** Plays steps sent by the editor's "Test in game". Returns why it can't right now, or null once started. */
+  editorPlay(steps: Step[]): string | null {
+    if (this.ended || this.transitioning) return 'The game is between areas. Try again in a moment.';
+    if (this.combat.inCombat) return 'A fight is going on in the game. Try again after it.';
+    if (this.runner.running || this.scene.isPaused()) return 'Something is open in the game (dialogue or tactics). Close it first.';
+    void this.runSteps(steps);
+    return null;
+  }
+
+  /** Saves after the editor changed a flag, unless the game is mid-fight or mid-event (the next autosave has it). */
+  editorFlagsChanged() {
+    if (!this.combat.inCombat && !this.runner.running && !this.ended && !this.transitioning) this.saveGame();
   }
 
   // ── travel & talking ──

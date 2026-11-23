@@ -1,0 +1,28 @@
+{
+  "speakers": { "stranger": { "name": "The Stranger", "color": "#4a3a5a" } },
+  "endScreen": { "title": "End of the demo", "text": "Thanks for playing! The road from Barrelsby goes on…" },
+  "events": {
+    "intro": [
+      { "do": "say", "text": "For weeks, a stranger has been seen on the edge of Barrelsby." },
+      { "do": "say", "text": "He promises the townsfolk riches if they follow him into the woods. Some already have, and none have come back." },
+      { "do": "say", "speaker": "yasmi", "text": "Then we go to him. East road, into the woods." },
+      { "do": "say", "text": "Click the ground to walk.   Press T to set the party's tactics. Fights play out on their own." }
+    ],
+    "forestEdge": [
+      { "do": "say", "text": "The road narrows as the trees close in. Fresh footprints lead east, many of them." },
+      { "do": "say", "speaker": "hyne", "text": "Townsfolk. They walked this way willingly." }
+    ],
+    "meetStranger": [
+      { "do": "say", "text": "Ahead, in a clearing, a tall figure in a dark coat waits as if he expected company." },
+      { "do": "say", "speaker": "stranger", "text": "More visitors from Barrelsby. Have you come to get rich, too?" },
+      { "do": "say", "speaker": "yasmi", "text": "We've come to bring our people home." },
+      { "do": "say", "speaker": "stranger", "text": "Then you'll have to take them from me." },
+      { "do": "fight", "group": "stranger" }
+    ],
+    "strangerDefeated": [
+      { "do": "say", "text": "The Stranger falls. Deeper in the woods, voices: the missing townsfolk, dazed but alive." },
+      { "do": "say", "speaker": "oxleth", "text": "He wasn't working alone. Someone gave him that power." },
+      { "do": "endGame" }
+    ]
+  }
+}

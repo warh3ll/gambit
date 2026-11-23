@@ -1,11 +1,10 @@
 import Phaser from 'phaser';
 import { NPCS } from '../data/npcs';
 import { PARTY } from '../data/party';
-import { SPEAKER_NAMES } from '../data/story';
+import { SPEAKERS } from '../data/story';
 import { pixelCamera, sharpenText, textStyle, type ViewSize } from '../view';
+import { HEADSHOT_SIZE } from '../world/placeholderArt';
 
-/** Headshot size in game pixels (art key `headshot-<speaker>`, see src/data/art.ts). */
-export const HEADSHOT_SIZE = 40;
 const BOX_MAX_WIDTH = 460;
 const PAD = 8;
 const OPTION_H = 13;
@@ -155,5 +154,5 @@ function headshotKey(scene: Phaser.Scene, speaker: string): string | null {
 }
 
 function speakerName(id: string) {
-  return PARTY.find((c) => c.id === id)?.name ?? NPCS[id]?.name ?? SPEAKER_NAMES[id] ?? id;
+  return PARTY.find((c) => c.id === id)?.name ?? NPCS[id]?.name ?? SPEAKERS[id]?.name ?? id;
 }

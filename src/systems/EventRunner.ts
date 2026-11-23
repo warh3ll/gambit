@@ -68,7 +68,8 @@ export class EventRunner {
           this.host.setFlag(step.flag, step.value);
           break;
         case 'if': {
-          const branch = this.host.flag(step.flag) === step.equals ? step.then : step.else;
+          const matches = (this.host.flag(step.flag) === step.equals) !== !!step.not;
+          const branch = matches ? step.then : step.else;
           if (!(await this.exec(branch))) return false;
           break;
         }

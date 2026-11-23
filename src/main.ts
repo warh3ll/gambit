@@ -24,8 +24,13 @@ function start() {
     scene: [BootScene, TitleScene, WorldScene, UIScene, TacticsScene, DialogScene, EndScene],
   });
 
-  // Dev builds only: expose the game for debugging in the browser console / automated tests.
-  if (import.meta.env.DEV) (window as unknown as { __game: Phaser.Game }).__game = game;
+  // Dev builds only: expose the game for debugging in the browser console / automated tests,
+  // and let the editor talk to it.
+  if (import.meta.env.DEV) {
+    (window as unknown as { __game: Phaser.Game }).__game = game;
+    // "Test in game" from the Gambit Editor (editor.html).
+    void import('./game/editorBridge').then((m) => m.connectEditor(game));
+  }
 }
 
 // Wait for the UI font so the first frame of text doesn't render in a fallback font.

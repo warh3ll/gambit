@@ -235,7 +235,7 @@ Each step ends with something playable, like the milestones so far.
 | M9 ✅ | **Game state & saving** | Everything else stores its data here. |
 | M10 ✅ | **Areas & travel** (2 areas from the slice + exits, NPC you can click) | The world everything else happens in. |
 | M11 ✅ | **Event scripting** (steps, triggers, flags, choices) | Story drives party changes and unlocks. |
-| M12 ⏸ | **Roster & party manager** (join/leave from events, P screen) | Needs events to add/remove members. *On hold: the designer is building an editor in a separate branch first.* |
+| M12 ⏸ | **Roster & party manager** (join/leave from events, P screen) | Needs events to add/remove members. *On hold while the Gambit Editor is built (see PLAN.md).* |
 | M13 | **XP & levels** | Needs saving; feeds the trees. |
 | M14 | **Progression trees** (one full tree as the example, the rest as stubs) | Needs XP; adds new tactic Actions. |
 | M15 | **Inventory & equipment** (bag, slots, consumables, gold) | Quest rewards and shops need it. |

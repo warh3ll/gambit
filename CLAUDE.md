@@ -16,8 +16,14 @@
   (~360 game px tall). Lay out UI in game pixels from the view size, never fixed screen sizes. 16px tiles.
 - All tactic building blocks (Actions, Targets, Types) live in `src/data/tactics.ts`.
   Keep `docs/TACTICS.md` in sync when adding or changing one.
-- Designer-editable content: story events in `src/data/story.ts` (steps from `src/game/script.ts`), areas (ASCII map + legend) in `src/data/areas/`,
-  NPCs in `src/data/npcs.ts`, real art overrides in `src/data/art.ts`. Keep these readable for a non-programmer.
+- Designer-editable content: story events in `src/data/story.json` and NPCs in `src/data/npcs.json`, both made with
+  the Gambit Editor (http://localhost:8080/editor.html; code in `src/editor/`, saving via `tools/editorPlugin.ts`).
+  Areas (ASCII map + legend) in `src/data/areas/`, real art overrides in `src/data/art.ts`. Keep these readable for a
+  non-programmer. The editor lays the JSON out one step per line; keep that layout when editing it by hand.
+- Adding or changing an event step type: `Step` in `src/game/script.ts`, `EventRunner`, and in the editor
+  `STEP_KINDS` (steps.ts), the card in `StepList.tsx`, and the checks in `validate.ts`.
+- The editor (editor.html, Preact) and the game bridge (`src/game/editorBridge.ts`) are dev-only and must stay out of
+  the build: `build.rolldownOptions.input` is only `index.html`.
 - The save game lives in `src/game/save.ts`. When its shape changes, bump `SAVE_VERSION` and add a step to
   `migrate()` so the designer's existing save keeps working.
 - Debug keys (J/K/V) are dev-only (`import.meta.env.DEV`); never ship them.

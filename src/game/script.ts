@@ -13,6 +13,9 @@
  *   ]
  *
  * The player can't move while an event runs (except during a fight it starts).
+ *
+ * The game's events live in src/data/story.json and src/data/npcs.json, made with the Gambit Editor
+ * (http://localhost:8080/editor.html while the dev server runs). The helpers below build the same steps in code.
  */
 import type { FlagValue } from './save';
 
@@ -20,7 +23,8 @@ export type Step =
   | { do: 'say'; speaker?: string; text: string }
   | { do: 'choice'; speaker?: string; prompt: string; options: { label: string; steps: Step[] }[] }
   | { do: 'setFlag'; flag: string; value: FlagValue }
-  | { do: 'if'; flag: string; equals: FlagValue; then: Step[]; else: Step[] }
+  /** `then` runs if the flag equals `equals` (with `not`: if it doesn't), otherwise `else`. */
+  | { do: 'if'; flag: string; equals: FlagValue; not?: boolean; then: Step[]; else: Step[] }
   | { do: 'fight'; group: string }
   | { do: 'heal' }
   | { do: 'teleport'; area: string; at: string }
@@ -57,7 +61,14 @@ export const ifFlag = (flag: string, then: Step[], otherwise: Step[] = [], equal
 });
 
 /** Runs `then` if the flag is NOT set. */
-export const ifNotFlag = (flag: string, then: Step[], otherwise: Step[] = []): Step => ifFlag(flag, otherwise, then);
+export const ifNotFlag = (flag: string, then: Step[], otherwise: Step[] = []): Step => ({
+  do: 'if',
+  flag,
+  equals: true,
+  not: true,
+  then,
+  else: otherwise,
+});
 
 /**
  * Starts the fight with a named enemy group in this area (see `encounters` in the area file).

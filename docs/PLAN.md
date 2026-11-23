@@ -30,7 +30,8 @@ refining those tactics.
 | Language | TypeScript, bundled with Vite |
 | Resolution | Canvas fills the browser window (any aspect, incl. ultrawide). Whole-number pixel zoom so ~360 world px fit top to bottom (1080p → 3×, 1440p → 4×); wider screens see more. UI text at full resolution. |
 | Tile size | 16×16 |
-| Maps | Areas in `src/data/areas/`: an ASCII map (one character per tile) plus a legend for exits, NPCs, enemies and story triggers. Tiled can come later, together with a real tileset. |
+| Maps | Areas in `src/data/areas/`: an ASCII map (one character per tile) plus a legend for exits, NPCs, enemies and story triggers. A map painter in the Gambit Editor comes next (E2); Tiled import stays possible for later. |
+| Content editor | **The Gambit Editor**: http://localhost:8080/editor.html while `npm run dev` runs. Dev server only, never in the itch build. |
 | Release | `npm run build` → zip `dist/` → upload as HTML5 game on itch.io |
 
 ### Code map
@@ -39,11 +40,11 @@ refining those tactics.
 |---|---|
 | `src/data/tactics.ts` | **All tactic pieces**: Actions, Targets, Types, tactic row format |
 | `src/data/party.ts` | The party: stats, known actions, default tactics |
-| `src/data/story.ts` | **Story events**: intro, story triggers, fight-won events, end screen |
-| `src/game/script.ts` | **Event steps** (`say`, `narrate`, `choice`, `setFlag`, `ifFlag`, `fight`, `heal`, `teleport`, `endGame`) |
+| `src/data/story.json` | **Story events** (intro, story triggers, fight-won events), extra speakers, end screen. Made in the Gambit Editor; `story.ts` loads it |
+| `src/game/script.ts` | **Event steps** (`say`, `narrate`, `choice`, `setFlag`, `ifFlag` / `ifNotFlag`, `fight`, `heal`, `wait`, `teleport`, `endGame`) |
 | `src/systems/EventRunner.ts` | Runs event steps one after another |
 | `src/data/areas/` | **Areas**: one file per area (map + legend); list new areas in `index.ts` |
-| `src/data/npcs.ts` | **NPCs**: name, look, what they say |
+| `src/data/npcs.json` | **NPCs**: name, look, conversation. Made in the Gambit Editor; `npcs.ts` loads it |
 | `src/data/art.ts` | **Replacing placeholder art**: list real PNGs here, key → file in `public/art/` |
 | `src/systems/TacticEngine.ts` | Picks which tactic row fires (top to bottom, first match) |
 | `src/systems/Pathfinder.ts` | A* pathfinding on the tile grid + path smoothing |
@@ -57,6 +58,9 @@ refining those tactics.
 | `src/world/` | Units (party members, enemies), NPCs, party formation, tiles, area map loader |
 | `src/scenes/` | Phaser scenes: Boot (art), World (map, movement, story triggers, retry), UI (HUD), Tactics (editor), Dialog, End |
 | `src/view.ts` | Full-window pixel camera (whole-number zoom), UI font and text style |
+| `editor.html`, `src/editor/` | **The Gambit Editor** (Preact): events & dialogue, NPCs, speakers, problems, test in game |
+| `tools/editorPlugin.ts` | Dev-server side of the editor: reads and saves the content JSON files |
+| `src/game/editorBridge.ts` | Dev only: lets the editor play events and change flags in the open game tab |
 | `docs/TACTICS.md` | Designer-facing list of tactics, planned and implemented |
 
 ## Party (first iteration)
@@ -189,6 +193,35 @@ Proposed milestones **M9–M16** are listed there. **M12 is on hold** until the 
   The Stranger's ending is his fight's `onWin` event.
 - Save v3: intro flag renamed, the Stranger's group is saved by name.
 
+## The Gambit Editor
+
+A visual editor for the game's content, built into the dev server: open http://localhost:8080/editor.html
+next to the game tab. It saves straight into the project's data files, and the game picks up new text without reloading.
+
+### E1 — Event & dialogue editor ✅ *(branch `feature/editor`)*
+- **Events tab**: every story event as a list of steps (line, narration, choice, if flag, set flag, start fight,
+  heal party, pause, move party, end game). Add a step with **+** (between steps or at the end), drag the ⠿ handle
+  to move it (also into and out of choice answers and if/otherwise branches), duplicate or delete it.
+  Speakers, fights, areas and start points are picked from lists, so they can't be misspelled.
+  Each event shows where it plays from (new game, a map trigger, after a fight, on arrival). Also: the end screen.
+- **NPCs tab**: name, look (placeholder colour), and their conversation, with the same step editor.
+- **Speakers tab**: the party, the NPCs, and other speakers such as the Stranger (name and headshot colour).
+- **Preview**: click a line or choice to see it in the game's dialogue box, with the headshot.
+- **Test in game**: plays the open event (or from a chosen step) in the game tab, saved or not.
+  **Flags in your game** shows what the running game remembers; clear a flag to see an event again.
+- **Problems**: unknown speakers, flags that are checked but never set, fights that aren't in the area where an
+  event plays, a map trigger with no event, steps that never run, and so on. Click one to jump to it.
+- **Save** (Ctrl+S) writes `src/data/story.json` and `src/data/npcs.json`. Undo / redo with Ctrl+Z / Ctrl+Y.
+  Unsaved work is kept in the browser if the tab closes. If a file was changed outside the editor
+  since it was opened, the editor asks before overwriting it.
+- *Notes:* names the map refers to (an event used by a trigger, an NPC placed on a map) can't be renamed in the
+  editor yet; that comes with the map painter. "If flag" can now also check that a flag is *not* set.
+  New speakers or new looks reload the game tab (their placeholder art is made at startup); text changes don't.
+
+### E2 — Map painter *(next)*
+- Paint tiles; place NPCs, exits, start points, enemies and story triggers; link them to events in the editor.
+- Areas move from `src/data/areas/*.ts` to editor-owned files, like events did.
+
 ## Decisions log
 
 | Date | Decision |
@@ -240,9 +273,11 @@ Proposed milestones **M9–M16** are listed there. **M12 is on hold** until the 
 | 2026-11-23 | The story doesn't depend on who is in the active party (no leader lock). The main character stays in the background even when not in the active party. |
 | 2026-11-23 | M12 test character: Vesper, the Brigand (ranged damage), joining through an event. |
 | 2026-11-23 | M12 is on hold: the designer is building an editor in a separate branch/chat first. |
+| 2026-11-23 | World building happens in our own visual editor (the Gambit Editor, in the dev server) rather than external tools: event & dialogue editor first (E1), then a map painter (E2). |
+| 2026-11-23 | Story events and NPCs are stored as JSON files that the editor reads and writes (`story.json`, `npcs.json`). |
 
 ## Open questions for the designer
 
 1. **Progression** — see [SYSTEMS.md](SYSTEMS.md) §5 (progression trees).
-2. **Story text** — everything in `src/data/story.ts` is placeholder writing; the designer will work on dialogue later. Who is the Stranger?
+2. **Story text** — everything in `src/data/story.json` is placeholder writing; the designer will work on dialogue later. Who is the Stranger?
 3. **Escape** — should the party ever be able to flee a fight? *(parked for later)*

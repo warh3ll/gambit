@@ -1,0 +1,56 @@
+{
+  "villager": {
+    "name": "Worried Villager",
+    "color": "#9a7a5a",
+    "talk": [
+      { "do": "say", "speaker": "villager", "text": "My cousin went into the woods with that stranger three days ago. Not a word since." },
+      { "do": "say", "speaker": "villager", "text": "If you're going east, please, bring him back." }
+    ]
+  },
+  "marta": {
+    "name": "Old Marta",
+    "color": "#b8a0c8",
+    "talk": [
+      {
+        "do": "if",
+        "flag": "metMarta",
+        "equals": true,
+        "not": true,
+        "then": [
+          { "do": "say", "speaker": "marta", "text": "Come in, come in. Mind the stools." },
+          { "do": "say", "speaker": "marta", "text": "That stranger knocked on my door too. Said I'd never want for anything again." },
+          { "do": "say", "speaker": "marta", "text": "I told him I already don't. He didn't like that." },
+          { "do": "setFlag", "flag": "metMarta", "value": true }
+        ],
+        "else": [
+          { "do": "say", "speaker": "marta", "text": "Back again? The kettle's always on." }
+        ]
+      },
+      {
+        "do": "choice",
+        "speaker": "marta",
+        "prompt": "Anything I can do for you?",
+        "options": [
+          {
+            "label": "Could we rest here a while?",
+            "steps": [
+              { "do": "say", "speaker": "marta", "text": "Of course. Sit, all of you." },
+              { "do": "heal" },
+              { "do": "say", "text": "The party rests. Everyone is back to full health." }
+            ]
+          },
+          {
+            "label": "Where did the stranger go?",
+            "steps": [
+              { "do": "say", "speaker": "marta", "text": "East, down the road and into the woods. Where else do people vanish?" }
+            ]
+          },
+          {
+            "label": "Nothing, thank you.",
+            "steps": [{ "do": "say", "speaker": "marta", "text": "Mind how you go." }]
+          }
+        ]
+      }
+    ]
+  }
+}
