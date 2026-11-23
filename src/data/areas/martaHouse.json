@@ -1,0 +1,20 @@
+{
+  "name": "Marta's House",
+  "kind": "interior",
+  "starts": { "door": { "x": 7, "y": 6 } },
+  "exits": [{ "x": 7, "y": 7, "to": "barrelsbyRoad", "at": "martaDoor" }],
+  "npcs": [{ "id": "marta", "x": 7, "y": 3 }],
+  "enemies": [],
+  "triggers": [],
+  "encounters": {},
+  "tiles": [
+    "WWWWWWWWWWWWWW",
+    "W____________W",
+    "W_OO______OO_W",
+    "W_OO_________W",
+    "W____________W",
+    "W_O__________W",
+    "W_O__________W",
+    "WWWWWWWDWWWWWW"
+  ]
+}

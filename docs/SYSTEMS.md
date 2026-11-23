@@ -253,7 +253,8 @@ leave it, but can sit in the reserve like anyone else. Events can still have the
     > **Answer:** **Gold, yes.** Enemies sometimes drop it, and quests and side quests give it as rewards.
     > Items can be **sold in shops**.
 25. **Enemy drops**: do enemies drop items/gold, or do items only come from quests, shops and chests?
-    > **Answer:** Enemies can drop **gold and consumables**. Equipment doesn't drop from enemies.
+    > **Answer:** Enemies can drop **gold and consumables**. Ordinary enemies don't drop equipment.
+    > **Unique enemies** (story/boss fights) can have **special loot** that only drops from them.
 26. Inventory **limit** (slots/weight), or unlimited?
     > **Answer:** **Unlimited** (no inventory management). But there's only **one stack per consumable**, and a stack
     > holds at most **20**.
@@ -265,6 +266,8 @@ leave it, but can sit in the reserve like anyone else. Events can still have the
 - `Use <consumable>` becomes a tactic **Action** for each consumable. The row is skipped while that consumable's stack
   is empty.
 - Each enemy type has a **loot table**: a gold range and a chance for each consumable. Loot is shown after the fight.
+- A **unique** encounter (in the area's `encounters`) can also name its own **special loot**, which can include
+  equipment. It's given once, when that fight is won.
 - When a stack is full at 20, extra copies of that consumable aren't picked up. The loot text says so.
 
 ---

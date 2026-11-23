@@ -275,7 +275,7 @@ next to the game tab. It saves straight into the project's data files, and the g
 | 2026-11-23 | Character creation is planned as M17 (SYSTEMS.md §3b). A placeholder main character (`hero`) comes with M12 so events can use them already. |
 | 2026-11-23 | Equipment slots: Weapon, Armour, and Shield (for shield users). More may come with new classes. Weapons come in pools per type (e.g. all healers share one pool; wands are the pool for ranged magic damage). |
 | 2026-11-23 | Consumables can be used in combat through tactic rows, e.g. `Use Health Potion \| Any ally \| HP below 25%`. |
-| 2026-11-23 | Gold: enemies sometimes drop it, and quests and side quests give it. Items can be sold in shops. Enemies drop gold and consumables, not equipment. |
+| 2026-11-23 | Gold: enemies sometimes drop it, and quests and side quests give it. Items can be sold in shops. Enemies drop gold and consumables, not equipment. Unique enemies can have special loot that only drops from them. |
 | 2026-11-23 | The inventory is unlimited. There's only one stack per consumable, and a stack holds at most 20. |
 | 2026-11-23 | Character creation: the player picks name, class (any class) and look. None of it can be changed later. Whether creation comes before the intro or inside the story is open until the story is written. |
 | 2026-11-23 | M12 test character: Vesper, the Brigand (ranged damage), joining through an event. |
