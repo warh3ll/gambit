@@ -133,11 +133,18 @@ More classes and characters can be found later in the game.
   The final fight is won with the default tactics: comfortably at full HP, narrowly (often with most of the party down)
   at the HP you typically arrive with. Acolytes don't heal for now (see decisions log).
 
-### M7 — Art & audio pass
+### M7 — Art & audio pass ⏸ *(on hiatus)*
 - Real sprites, tileset, UI skin, sounds and music.
+- *On hiatus:* the designer replaces placeholder art as it gets made (via `src/data/art.ts`).
 
-### M8 — itch.io release
+### M8 — itch.io release ⏸ *(on hiatus)*
 - Build + zip script, itch page, test in the itch embed.
+
+## Next: game systems
+
+Plans and questions for the full game's systems are in [SYSTEMS.md](SYSTEMS.md): game state & saving,
+areas & travel, event scripting, party roster & manager, XP & levels, progression trees.
+Proposed milestones **M9–M14** are listed there; they start once the designer has answered the questions.
 
 ## Decisions log
 
@@ -170,9 +177,10 @@ More classes and characters can be found later in the game.
 | 2026-11-23 | Defeat: retry from just before the last encounter started. |
 | 2026-11-23 | Art: Claude provides placeholders until the designer replaces them with real art (art is the main bottleneck). |
 | 2026-11-23 | The final fight should be winnable with the default tactics (there aren't enough tactics yet to demand more). Enemy Acolytes don't heal, for now. |
+| 2026-11-23 | M7 (art & audio) and M8 (itch release) are on hiatus; art is updated as the designer makes it. Next up: game systems (SYSTEMS.md). |
 
 ## Open questions for the designer
 
-1. **Progression** — are new Actions/Types unlocked over time (found, learned, bought), or all available from the start?
+1. **Progression** — see [SYSTEMS.md](SYSTEMS.md) §5 (progression trees).
 2. **Story text** — everything in `src/data/story.ts` is placeholder writing; the designer will work on dialogue later. Who is the Stranger?
 3. **Escape** — should the party ever be able to flee a fight? *(parked for later)*
