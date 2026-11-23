@@ -48,8 +48,12 @@ All of them share one foundation: a **game state** that is saved and loaded. Tha
 
 **Questions**
 4. Is the world **connected areas** you walk between, or is there also a **world map** (pick a destination, travel there)?
+   > **Answer:** A mix: larger areas to walk, plus **instanced** places like dungeons and houses.
 5. Towns: what happens in them? Talking to NPCs, shops, resting/healing, recruiting characters?
+   > **Answer:** All of those, plus picking up side quests.
 6. Can areas be revisited, and do enemies **respawn** (e.g. for grinding XP), or is every fight a one-off?
+   > **Answer:** Enemies **respawn on transition**: go into a house and back out, and they're back.
+   > *(Claude's assumption, to confirm: story/boss fights such as the Stranger are marked **unique** and stay beaten.)*
 
 ---
 
@@ -106,7 +110,9 @@ arthurLeaves: [
 
 **Questions**
 - Do you want a quest log, or should quests only live in dialogue?
-- Rewards: XP? New characters? Items/equipment (would need an inventory, which isn't planned yet)?
+  > **Answer:** Yes, a quest log.
+- Rewards: XP? New characters? Items/equipment?
+  > **Answer:** All of those, depending on the quest. Items need the inventory (§6).
 
 ---
 
@@ -176,6 +182,42 @@ arthurLeaves: [
 
 ---
 
+## 6. Inventory: equipment & consumables
+
+**Proposal**
+- One **shared party inventory** (bag) with two kinds of item:
+  - **Equipment**, worn by a character. Each character has slots, e.g. **Weapon**, **Armour** and **Trinket**.
+    - A weapon keeps the character's weapon type: Arthur always uses melee weapons, Telara always uses wands.
+      A better weapon changes the numbers (damage, speed, maybe range) and can add an effect.
+    - Armour and trinkets give stats (HP, damage taken) or small passives.
+  - **Consumables**, used up: potions, antidotes, scrolls. Stackable.
+- **Using consumables:** out of combat, from the inventory screen. In combat, the player isn't involved, so…
+  - …proposal: consumables become tactic **Actions**, e.g. `Use Potion | Any ally | HP below 25%`.
+    The row only fires while the bag has one. This keeps the "you program, you don't play" idea.
+- **Gold** for buying and selling in shops.
+- Items come from quest rewards, shops, chests in the world, and maybe enemy drops.
+- Inventory screen (key **I**): bag list, equipment per character, compare stats when choosing.
+- Items are data in `src/data/items.ts`: id, name, kind, slot, stats/effect, price, icon.
+
+**Questions**
+22. Equipment **slots**: Weapon + Armour + Trinket, or something else?
+23. Can consumables be used **in combat via tactics** (`Use Potion | …`), or only outside fights?
+24. **Gold**: yes or no? Can items be **sold**?
+25. **Enemy drops**: do enemies drop items/gold, or do items only come from quests, shops and chests?
+26. Inventory **limit** (slots/weight), or unlimited?
+
+---
+
+## 7. Town services
+
+Built from pieces of the other systems, mostly as NPC events:
+- **Shops**: an NPC opens a buy/sell screen (needs §6).
+- **Resting**: an inn NPC or a bed restores the party's HP, maybe for gold.
+- **Recruiting**: an event that adds a character to the roster (needs §3).
+- **Side quests**: NPCs start and finish quests (needs §2b).
+
+---
+
 ## Suggested build order
 
 Each step ends with something playable, like the milestones so far.
@@ -188,6 +230,8 @@ Each step ends with something playable, like the milestones so far.
 | M12 | **Roster & party manager** (join/leave from events, P screen) | Needs events to add/remove members. |
 | M13 | **XP & levels** | Needs saving; feeds the trees. |
 | M14 | **Progression trees** (one full tree as the example, the rest as stubs) | Needs XP; adds new tactic Actions. |
+| M15 | **Inventory & equipment** (bag, slots, consumables, gold) | Quest rewards and shops need it. |
+| M16 | **Quests & town services** (quest log, shop, inn, recruiting) | Built on events, roster and inventory. |
 
 The boilerplate for each system comes with placeholder content: two areas, an NPC, an event where someone joins and
 someone leaves, a sixth character to swap in, and one tree filled out. You replace that content with the real thing.

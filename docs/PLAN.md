@@ -145,7 +145,7 @@ More classes and characters can be found later in the game.
 
 Plans and questions for the full game's systems are in [SYSTEMS.md](SYSTEMS.md): game state & saving,
 areas & travel, event scripting, party roster & manager, XP & levels, progression trees.
-Proposed milestones **M9–M14** are listed there.
+Proposed milestones **M9–M16** are listed there.
 
 ### M9 — Game state & saving ✅ *(branch `feature/game-state`)*
 - One save game holding everything that changes: area + position, leader, story flags, beaten encounters,
@@ -195,6 +195,11 @@ Proposed milestones **M9–M14** are listed there.
 | 2026-11-23 | Progression trees teach new skills or upgrade existing ones per character. They don't unlock tactic Types or Targets. |
 | 2026-11-23 | All tactic Types, Targets and all 10 rows are available from the start. |
 | 2026-11-23 | Saving: autosave, one save. Title screen with Continue / New game. |
+| 2026-11-23 | World: a mix of larger walkable areas and instanced places (dungeons, houses). |
+| 2026-11-23 | Towns have NPCs to talk to, shops, resting/healing, recruiting, and side quests to pick up. |
+| 2026-11-23 | Enemies respawn on area transitions (go into a house and out again: they're back). |
+| 2026-11-23 | Side quests have a quest log. Rewards vary per quest: XP, new characters, items. |
+| 2026-11-23 | Plan an inventory system for equipment and consumables (SYSTEMS.md §6). |
 
 ## Open questions for the designer
 
