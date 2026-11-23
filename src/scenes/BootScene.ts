@@ -3,6 +3,7 @@ import { TILE_SIZE } from '../config';
 import { ENEMIES } from '../data/enemies';
 import { NPCS } from '../data/npcs';
 import { PARTY } from '../data/party';
+import { HEADSHOT_SIZE } from './DialogScene';
 import { ART_FILES } from '../data/art';
 import { TILE_COUNT, Tile } from '../world/tiles';
 
@@ -84,6 +85,27 @@ export class BootScene extends Phaser.Scene {
       g.fillStyle(0xc58cff).fillRect(6, 10, 2, 2).fillRect(p - 8, 10, 2, 2);
       make('portrait-stranger', p, p);
     }
+
+    // Headshots for dialogue: a bigger face per speaker.
+    const H = HEADSHOT_SIZE;
+    const headshot = (key: string, color: number, hood = false) => {
+      g.clear();
+      g.fillStyle(0x2a2438).fillRect(0, 0, H, H);
+      if (hood) {
+        g.fillStyle(0x1a1424).fillRect(6, 4, H - 12, H - 4);
+        g.fillStyle(0x4a3a5a).fillRect(11, 12, H - 22, H - 12);
+        g.fillStyle(0xc58cff).fillRect(14, 20, 4, 3).fillRect(H - 18, 20, 4, 3);
+      } else {
+        g.fillStyle(color).fillRect(8, 8, H - 16, H - 8); // head and shoulders
+        g.fillStyle(0x000000, 0.15).fillRect(8, 30, H - 16, H - 30);
+        g.fillStyle(ink).fillRect(13, 18, 4, 5).fillRect(H - 17, 18, 4, 5);
+        g.fillStyle(ink, 0.6).fillRect(17, 27, H - 34, 2);
+      }
+      make(key, H, H);
+    };
+    for (const c of PARTY) headshot(`headshot-${c.id}`, c.color);
+    for (const n of Object.values(NPCS)) headshot(`headshot-${n.id}`, n.color);
+    headshot('headshot-stranger', 0, true);
 
     // Portrait frames: normal and leader.
     for (const [key, color] of [

@@ -39,7 +39,9 @@ refining those tactics.
 |---|---|
 | `src/data/tactics.ts` | **All tactic pieces**: Actions, Targets, Types, tactic row format |
 | `src/data/party.ts` | The party: stats, known actions, default tactics |
-| `src/data/story.ts` | **All story text**: intro, story triggers, ending, end screen |
+| `src/data/story.ts` | **Story events**: intro, story triggers, fight-won events, end screen |
+| `src/game/script.ts` | **Event steps** (`say`, `narrate`, `choice`, `setFlag`, `ifFlag`, `fight`, `heal`, `teleport`, `endGame`) |
+| `src/systems/EventRunner.ts` | Runs event steps one after another |
 | `src/data/areas/` | **Areas**: one file per area (map + legend); list new areas in `index.ts` |
 | `src/data/npcs.ts` | **NPCs**: name, look, what they say |
 | `src/data/art.ts` | **Replacing placeholder art**: list real PNGs here, key → file in `public/art/` |
@@ -172,6 +174,20 @@ Proposed milestones **M9–M16** are listed there.
 - Placeholder content: **Marta's House** in Barrelsby (door on one of the houses), Old Marta inside,
   a Worried Villager by the road.
 - Story triggers are now named (`forestEdge`, `meetStranger`) instead of numbered; old saves are upgraded (save v2).
+
+### M11 — Event scripting ✅ *(branch `feature/events`)*
+- **Events** are lists of steps written in data (`src/game/script.ts` has the steps and how to use them):
+  `say` / `narrate`, `choice` (answers with their own steps), `setFlag`, `ifFlag` / `ifNotFlag`, `fight`, `heal`,
+  `teleport`, `wait`, `endGame`. Join/leave, XP, items and quests get their steps in M12–M16.
+- **Where events start**: `intro` once per new game; **story triggers** on the map (once, remembered when finished);
+  an area's **`onEnter`**; a fight's **`onWin`** (named enemy groups in an area's `encounters`); and **NPCs'** `talk`.
+- **After a fight**: the `fight` step ends the event, and what happens after winning goes in the group's `onWin` event.
+  That way it also works when the fight is retried, or started by walking into the enemies.
+- **Dialogue box**: 40×40 **headshot** of whoever talks (placeholder; art key `headshot-<id>`), choices picked by
+  click, ↑/↓ + Enter, or number keys.
+- Placeholder content: Marta now greets you differently the second time, and can let the party **rest (full heal)**.
+  The Stranger's ending is his fight's `onWin` event.
+- Save v3: intro flag renamed, the Stranger's group is saved by name.
 
 ## Decisions log
 

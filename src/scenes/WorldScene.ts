@@ -4,10 +4,11 @@ import { ENEMIES } from '../data/enemies';
 import { getArea } from '../data/areas';
 import type { AreaDef } from '../data/areas/types';
 import { NPCS } from '../data/npcs';
-import { ENDING, INTRO, type Line, TRIGGERS } from '../data/story';
+import { EVENTS } from '../data/story';
 import { session } from '../game/session';
 import { CombatManager, type CombatResult } from '../systems/CombatManager';
 import { CombatSystem } from '../systems/CombatSystem';
+import { type EventHost, EventRunner } from '../systems/EventRunner';
 import { Pathfinder, type Point } from '../systems/Pathfinder';
 import { pixelCamera, type ViewSize } from '../view';
 import { Enemy } from '../world/Enemy';
@@ -16,7 +17,7 @@ import { drawTileBorder } from '../world/highlight';
 import { Npc } from '../world/Npc';
 import { Party } from '../world/Party';
 import { isBlocking } from '../world/tiles';
-import type { DialogData } from './DialogScene';
+import type { DialogScene } from './DialogScene';
 import type { UIScene } from './UIScene';
 
 /** How the world scene is started: a specific area/arrival point, or (by default) wherever the save says. */
@@ -54,6 +55,9 @@ export class WorldScene extends Phaser.Scene {
   /** NPC the party is walking up to, to talk. */
   private talkTarget: Npc | null = null;
   private transitioning = false;
+  private runner!: EventRunner;
+  /** The dialogue box is open (and the world paused for it). */
+  private dialogOpen = false;
   private pathfinder!: Pathfinder;
   private combatSystem!: CombatSystem;
   private enemies: Enemy[] = [];
@@ -87,6 +91,7 @@ export class WorldScene extends Phaser.Scene {
     this.trail = [];
     this.trailTimer = 0;
     this.ended = false;
+    this.dialogOpen = false;
   }
 
   create() {
@@ -111,6 +116,7 @@ export class WorldScene extends Phaser.Scene {
     const start = this.applySave(spawn);
     this.combat = new CombatManager(this.party, this.enemies);
     this.combatSystem = new CombatSystem(this, this.pathfinder);
+    this.runner = new EventRunner(this.eventHost());
     this.checkpoint = { pos: start, hp: this.party.snapshotHp() };
     this.combat.on('combatStart', () => this.saveCheckpoint());
     this.combat.on('combatEnd', (result: CombatResult, fought: Enemy[]) => this.onCombatEnd(result, fought));
@@ -156,9 +162,7 @@ export class WorldScene extends Phaser.Scene {
 
     this.scene.launch('UI', { party: this.party, combat: this.combat, areaName: this.area.name });
     if (this.entry) this.saveGame(); // arrived through an exit: save the new area
-    if (!session.flag('introPlayed')) {
-      this.time.delayedCall(400, () => this.playStory(INTRO, () => session.setFlag('introPlayed')));
-    }
+    this.time.delayedCall(this.entry ? FADE_MS : 400, () => void this.arrivalEvents());
   }
 
   // ── saving ──
@@ -222,9 +226,9 @@ export class WorldScene extends Phaser.Scene {
     for (const e of this.enemies) e.tickTimers(dt);
 
     if (this.transitioning) return;
-    if (!this.combat.inCombat) {
-      this.recordTrail(dt);
-      if (this.checkTriggers()) return; // a story beat just paused the world
+    if (!this.combat.inCombat) this.recordTrail(dt);
+    if (!this.combat.inCombat && !this.runner.running) {
+      if (this.checkTriggers()) return; // a story event is starting
       if (this.checkExit()) return;
       this.checkTalk();
     }
@@ -244,24 +248,73 @@ export class WorldScene extends Phaser.Scene {
 
   /** Opens the tactics editor; the world (and combat) pauses while it's open. */
   private openTactics() {
+    if (this.runner.running) return;
     this.scene.pause();
     this.scene.pause('UI');
     this.scene.launch('Tactics', { party: this.party });
   }
 
-  /** Shows story lines; the world pauses until they're read. Autosaves afterwards. */
-  private playStory(lines: Line[], onDone?: () => void) {
-    const done = () => {
-      onDone?.();
-      if (!this.combat.inCombat && !this.ended) this.saveGame();
-    };
-    if (!lines.length) {
-      done();
+  // ── events ──
+
+  /** On arriving in an area: the intro (once per game), then the area's own arrival event. */
+  private async arrivalEvents() {
+    if (!session.flag('story.intro')) await this.runEvent('intro', () => session.setFlag('story.intro'));
+    if (this.area.onEnter) await this.runEvent(this.area.onEnter);
+  }
+
+  /** Runs a story event by id (src/data/story.ts), then `after`, then autosaves. */
+  private async runEvent(id: string, after?: () => void) {
+    const steps = EVENTS[id];
+    if (!steps) {
+      console.warn(`Unknown event "${id}"`);
       return;
     }
+    await this.runSteps(steps, after);
+  }
+
+  private async runSteps(steps: Parameters<EventRunner['run']>[0], after?: () => void) {
+    if (!(await this.runner.run(steps))) return;
+    after?.();
+    if (!this.combat.inCombat && !this.ended && !this.transitioning) this.saveGame();
+  }
+
+  /** How events reach into the world. */
+  private eventHost(): EventHost {
+    return {
+      flag: (name) => session.flag(name),
+      setFlag: (name, value) => session.setFlag(name, value),
+      openDialog: () => this.openDialog(),
+      closeDialog: () => this.closeDialog(),
+      startFight: (group) => {
+        if (this.enemies.some((e) => e.groupId === group && e.alive)) this.combat.engageGroup(group);
+        else console.warn(`No enemy group "${group}" standing in ${this.area.id}`);
+      },
+      healParty: () => {
+        for (const m of this.party.members) m.revive(m.maxHp);
+      },
+      teleport: (area, at) => this.travel(area, at),
+      endGame: () => this.finish(),
+    };
+  }
+
+  private async openDialog(): Promise<DialogScene> {
+    const dialog = this.scene.get('Dialog') as DialogScene;
+    if (this.dialogOpen) return dialog;
+    this.dialogOpen = true;
     this.scene.pause();
     this.scene.pause('UI');
-    this.scene.launch('Dialog', { lines, onDone: done } satisfies DialogData);
+    const ready = new Promise<void>((resolve) => dialog.events.once(Phaser.Scenes.Events.CREATE, () => resolve()));
+    this.scene.launch('Dialog');
+    await ready;
+    return dialog;
+  }
+
+  private closeDialog() {
+    if (!this.dialogOpen) return;
+    this.dialogOpen = false;
+    this.scene.stop('Dialog');
+    this.scene.resume();
+    this.scene.resume('UI');
   }
 
   /** Plays a story trigger when the leader steps on one. Returns true if one started. */
@@ -270,12 +323,8 @@ export class WorldScene extends Phaser.Scene {
     const id = this.map.triggers.get(tileKey(l));
     const flag = `story.${id}`;
     if (!id || session.flag(flag)) return false;
-    const trigger = TRIGGERS[id];
-    if (!trigger?.lines.length) return false;
-    this.playStory(trigger.lines, () => {
-      session.setFlag(flag); // only once read, so reloading mid-dialogue plays it again
-      if (trigger.startsFight) this.nearestGroupAttacks();
-    });
+    // Remembered once the event has finished, so reloading mid-dialogue plays it again.
+    void this.runEvent(id, () => session.setFlag(flag));
     return true;
   }
 
@@ -285,6 +334,13 @@ export class WorldScene extends Phaser.Scene {
   private checkExit(): boolean {
     const exit = this.map.exits.get(tileKey(this.party.leader));
     if (!exit) return false;
+    this.travel(exit.to, exit.at);
+    return true;
+  }
+
+  /** Fades out and loads another area (or reloads this one), arriving at start point `at`. */
+  private travel(area: string, at: string) {
+    if (this.transitioning) return;
     this.transitioning = true;
     this.talkTarget = null;
     for (const m of this.party.members) m.stop();
@@ -292,9 +348,8 @@ export class WorldScene extends Phaser.Scene {
     const cam = this.cameras.main;
     cam.fadeOut(FADE_MS, 13, 11, 20);
     cam.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () =>
-      this.scene.restart({ area: exit.to, entry: exit.at } satisfies WorldData),
+      this.scene.restart({ area, entry: at } satisfies WorldData),
     );
-    return true;
   }
 
   /** Highlights the door (exit) under the mouse, with a hand cursor. Hidden during fights. */
@@ -355,7 +410,7 @@ export class WorldScene extends Phaser.Scene {
       l.stop();
       l.faceTowards(npc);
       npc.faceTowards(l);
-      this.playStory(npc.def.lines);
+      void this.runSteps(npc.def.talk);
     } else if (!l.moving) {
       this.talkTarget = null;
     }
@@ -382,14 +437,6 @@ export class WorldScene extends Phaser.Scene {
   }
 
   // ── fights ──
-
-  private nearestGroupAttacks() {
-    const l = this.party.leader;
-    const alive = this.enemies.filter((e) => e.alive);
-    if (!alive.length) return;
-    const nearest = alive.reduce((a, b) => (dist(l, a) < dist(l, b) ? a : b));
-    this.combat.engageGroup(nearest.groupId);
-  }
 
   /** Remembers where to retry from: a recent spot outside every enemy's reach, and the party's HP right now. */
   private saveCheckpoint() {
@@ -420,8 +467,9 @@ export class WorldScene extends Phaser.Scene {
       if (unique && !session.data.beaten.includes(key)) session.data.beaten.push(key);
     }
     this.saveGame();
-    if (fought.some((e) => e.def.id === 'stranger')) {
-      this.time.delayedCall(1500, () => this.playStory(ENDING, () => this.finish()));
+    for (const groupId of new Set(fought.map((e) => e.groupId))) {
+      const onWin = this.map.encounters.find((g) => g.id === groupId)?.onWin;
+      if (onWin) this.time.delayedCall(1200, () => void this.runEvent(onWin));
     }
   }
 
@@ -460,7 +508,7 @@ export class WorldScene extends Phaser.Scene {
 
   private onClick(pointer: Phaser.Input.Pointer, over: Phaser.GameObjects.GameObject[]) {
     if (!pointer.leftButtonDown()) return;
-    if (performance.now() < this.ignoreClicksUntil || this.transitioning) return;
+    if (performance.now() < this.ignoreClicksUntil || this.transitioning || this.runner.running) return;
     const ui = this.scene.get('UI') as UIScene;
     if (ui.isOverUI(pointer)) return;
     if (this.combat.inCombat) return; // the party follows its tactics in a fight

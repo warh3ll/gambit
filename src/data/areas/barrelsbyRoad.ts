@@ -15,7 +15,7 @@
  *
  * This area's own markers are in `legend` below (exits, NPCs, story triggers, the Stranger).
  * Enemies within 4 tiles of each other form one group. Groups respawn every time the area is entered,
- * except `unique` ones, which stay beaten.
+ * except groups marked `unique` in `encounters`, which stay beaten.
  */
 import type { AreaDef } from './types';
 
@@ -27,9 +27,12 @@ export const BARRELSBY_ROAD: AreaDef = {
     D: { exit: { to: 'martaHouse', at: 'door' }, tile: 'Door' }, // Marta's front door
     d: { start: 'martaDoor' }, // where you come out of Marta's house
     n: { npc: 'villager' },
-    S: { enemy: 'stranger', unique: true },
+    S: { enemy: 'stranger', group: 'stranger' },
     '1': { trigger: 'forestEdge' },
     '2': { trigger: 'meetStranger' },
+  },
+  encounters: {
+    stranger: { unique: true, onWin: 'strangerDefeated' },
   },
   map: [
     'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY',

@@ -8,7 +8,7 @@ import { ACTIONS, type TacticRow, type TargetGroup, TARGETS, TYPES } from '../da
  * One save. Bump SAVE_VERSION and add a step to `migrate` whenever the shape changes,
  * so existing saves keep working.
  */
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 const STORAGE_KEY = 'gambit.save';
 /** M5 stored only tactics under this key; it's folded into the save on first load. */
 const OLD_TACTICS_KEY = 'gambit.tactics.v1';
@@ -36,9 +36,9 @@ export interface SaveData {
   /** Leader position in that area, or null for the area's start point. */
   position: { x: number; y: number } | null;
   leaderId: string;
-  /** Story flags: e.g. 'introPlayed', 'story.meetStranger', 'sliceComplete'. */
+  /** Story flags: e.g. 'story.intro', 'story.meetStranger' (finished events), 'metMarta', 'sliceComplete'. */
   flags: Record<string, FlagValue>;
-  /** Unique encounter groups beaten for good, as '<area>/<group id>'. (Other groups respawn.) */
+  /** Unique encounter groups beaten for good, as '<area>/<group name>'. (Other groups respawn.) */
   beaten: string[];
   members: Record<string, MemberSave>;
 }
@@ -127,6 +127,14 @@ function migrate(data: { version?: number }): SaveData {
         delete d.flags[from];
       }
     }
+  }
+  if (version < 3) {
+    // v3: the intro is an event like any other; the Stranger's group has a name.
+    if (d.flags?.introPlayed !== undefined) {
+      d.flags['story.intro'] = d.flags.introPlayed;
+      delete d.flags.introPlayed;
+    }
+    if (Array.isArray(d.beaten)) d.beaten = d.beaten.map((b) => (b === 'barrelsbyRoad/group-4' ? 'barrelsbyRoad/stranger' : b));
   }
   return d;
 }

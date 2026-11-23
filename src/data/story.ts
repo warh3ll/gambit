@@ -1,68 +1,53 @@
 /**
- * STORY — all dialogue and story text for the vertical slice.
+ * STORY — the story events of the game, written with the steps from src/game/script.ts.
  *
  * PLACEHOLDER WRITING: the designer owns the story; rewrite anything here.
  *
- * A line is { speaker, text }. Leave `speaker` out for narration.
- * Speakers: a party member ('yasmi', 'hyne', 'oxleth', 'arthur', 'telara'), an NPC id from src/data/npcs.ts,
- * or 'stranger'.
+ * Where events start:
+ *  - 'intro' plays once when a new game starts.
+ *  - Story triggers: a map character in an area's legend, e.g. `'1': { trigger: 'forestEdge' }`.
+ *    A trigger's event plays once (when the leader steps on it), and is remembered once it has finished.
+ *  - Fights: an area's `encounters` can name an event to play when that fight is won (`onWin`).
+ *  - Areas: an area's `onEnter` event plays every time the party arrives (use ifFlag to play it once).
+ *  - NPCs: their `talk` steps in src/data/npcs.ts play each time you talk to them.
  */
+import { type Step, endGame, fight, narrate, say } from '../game/script';
 
-export type SpeakerId = string;
-
-export interface Line {
-  speaker?: SpeakerId;
-  text: string;
-}
-
-/** Names for speakers who aren't party members. */
-export const SPEAKER_NAMES: Record<SpeakerId, string> = {
+/** Names for speakers who aren't party members or NPCs. */
+export const SPEAKER_NAMES: Record<string, string> = {
   stranger: 'The Stranger',
 };
 
-/** Shown when the game starts. */
-export const INTRO: Line[] = [
-  { text: 'For weeks, a stranger has been seen on the edge of Barrelsby.' },
-  {
-    text: 'He promises the townsfolk riches if they follow him into the woods. Some already have, and none have come back.',
-  },
-  { speaker: 'yasmi', text: 'Then we go to him. East road, into the woods.' },
-  { text: 'Click the ground to walk.   Press T to set the party\'s tactics. Fights play out on their own.' },
-];
+export const EVENTS: Record<string, Step[]> = {
+  intro: [
+    narrate('For weeks, a stranger has been seen on the edge of Barrelsby.'),
+    narrate(
+      'He promises the townsfolk riches if they follow him into the woods. Some already have, and none have come back.',
+    ),
+    say('yasmi', 'Then we go to him. East road, into the woods.'),
+    narrate('Click the ground to walk.   Press T to set the party\'s tactics. Fights play out on their own.'),
+  ],
 
-export interface StoryTrigger {
-  lines: Line[];
-  /** After the lines, the nearest enemy group attacks. */
-  startsFight?: boolean;
-}
+  forestEdge: [
+    narrate('The road narrows as the trees close in. Fresh footprints lead east, many of them.'),
+    say('hyne', 'Townsfolk. They walked this way willingly.'),
+  ],
 
-/**
- * Story triggers: placed on a map through the area's legend, e.g. `'1': { trigger: 'forestEdge' }` in
- * src/data/areas/barrelsbyRoad.ts. Each plays once, when the party leader steps on one of its tiles.
- */
-export const TRIGGERS: Record<string, StoryTrigger> = {
-  forestEdge: {
-    lines: [
-      { text: 'The road narrows as the trees close in. Fresh footprints lead east, many of them.' },
-      { speaker: 'hyne', text: 'Townsfolk. They walked this way willingly.' },
-    ],
-  },
-  meetStranger: {
-    startsFight: true,
-    lines: [
-      { text: 'Ahead, in a clearing, a tall figure in a dark coat waits as if he expected company.' },
-      { speaker: 'stranger', text: 'More visitors from Barrelsby. Have you come to get rich, too?' },
-      { speaker: 'yasmi', text: 'We\'ve come to bring our people home.' },
-      { speaker: 'stranger', text: 'Then you\'ll have to take them from me.' },
-    ],
-  },
+  meetStranger: [
+    narrate('Ahead, in a clearing, a tall figure in a dark coat waits as if he expected company.'),
+    say('stranger', 'More visitors from Barrelsby. Have you come to get rich, too?'),
+    say('yasmi', 'We\'ve come to bring our people home.'),
+    say('stranger', 'Then you\'ll have to take them from me.'),
+    fight('stranger'),
+  ],
+
+  // Plays when the 'stranger' fight in barrelsbyRoad is won (see that area's `encounters`).
+  strangerDefeated: [
+    narrate('The Stranger falls. Deeper in the woods, voices: the missing townsfolk, dazed but alive.'),
+    say('oxleth', 'He wasn\'t working alone. Someone gave him that power.'),
+    endGame(),
+  ],
 };
-
-/** Plays when The Stranger is defeated, before the end screen. */
-export const ENDING: Line[] = [
-  { text: 'The Stranger falls. Deeper in the woods, voices: the missing townsfolk, dazed but alive.' },
-  { speaker: 'oxleth', text: 'He wasn\'t working alone. Someone gave him that power.' },
-];
 
 /** The end screen after the slice. */
 export const END_SCREEN = {

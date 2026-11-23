@@ -16,9 +16,11 @@
   (~360 game px tall). Lay out UI in game pixels from the view size, never fixed screen sizes. 16px tiles.
 - All tactic building blocks (Actions, Targets, Types) live in `src/data/tactics.ts`.
   Keep `docs/TACTICS.md` in sync when adding or changing one.
-- Designer-editable content: story text in `src/data/story.ts`, areas (ASCII map + legend) in `src/data/areas/`,
+- Designer-editable content: story events in `src/data/story.ts` (steps from `src/game/script.ts`), areas (ASCII map + legend) in `src/data/areas/`,
   NPCs in `src/data/npcs.ts`, real art overrides in `src/data/art.ts`. Keep these readable for a non-programmer.
 - The save game lives in `src/game/save.ts`. When its shape changes, bump `SAVE_VERSION` and add a step to
   `migrate()` so the designer's existing save keeps working.
 - Debug keys (J/K/V) are dev-only (`import.meta.env.DEV`); never ship them.
+- The repo is in a OneDrive folder and Vite's watcher can miss rapid successive writes (it once served an empty or
+  half-edited file). Prefer writing a file in one go; if the browser shows stale code, `touch` the file.
 - Build output must work from a relative path (itch.io embed) — keep `base: './'` in `vite.config.ts`.

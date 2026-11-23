@@ -14,5 +14,8 @@ export default defineConfig({
     port: 8080,
     strictPort: true,
     open: false,
+    // The project lives in a OneDrive folder: wait until a file has finished being written before reloading it,
+    // otherwise a half-written (or empty) file can get served.
+    watch: { awaitWriteFinish: { stabilityThreshold: 150, pollInterval: 50 } },
   },
 });

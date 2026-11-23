@@ -17,11 +17,16 @@ const GROUP_DISTANCE = 4;
 type TilePos = { x: number; y: number };
 
 export interface EncounterDef {
+  /** The group's name if one of its enemies has `group` set, otherwise 'group-<n>' (numbered west to east). */
   id: string;
   /** Stays beaten once beaten (story/boss fights). Other groups respawn whenever the area is entered. */
   unique: boolean;
+  /** Event to play when this fight is won. */
+  onWin?: string;
   enemies: { type: EnemyTypeId; x: number; y: number }[];
 }
+
+type PlacedEnemy = EncounterDef['enemies'][number] & { group?: string };
 
 export interface LoadedMap {
   width: number;
@@ -75,18 +80,21 @@ export function loadMap(area: AreaDef): LoadedMap {
     encounters: [],
     triggers: new Map(),
   };
-  const enemies: (EncounterDef['enemies'][number] & { unique: boolean })[] = [];
+  const enemies: PlacedEnemy[] = [];
   for (const { marker: m, x, y } of placed) {
     tiles[y][x] = m.tile ? Tile[m.tile] : groundUnder(rows, x, y);
     const key = `${x},${y}`;
     if ('start' in m) out.starts.set(m.start, { x, y });
     else if ('exit' in m) out.exits.set(key, m.exit);
-    else if ('enemy' in m) enemies.push({ type: m.enemy, x, y, unique: !!m.unique });
+    else if ('enemy' in m) enemies.push({ type: m.enemy, x, y, group: m.group });
     else if ('npc' in m) out.npcs.push({ id: m.npc, x, y });
     else if ('trigger' in m) out.triggers.set(key, m.trigger);
   }
   if (!out.starts.size) throw new Error(`${area.id}: map has no start point`);
-  out.encounters = groupEnemies(enemies);
+  out.encounters = groupEnemies(enemies).map((g) => ({ ...g, ...area.encounters?.[g.id] }));
+  for (const name of Object.keys(area.encounters ?? {})) {
+    if (!out.encounters.some((g) => g.id === name)) throw new Error(`${area.id}: no enemy group named "${name}" on the map`);
+  }
   return out;
 }
 
@@ -105,8 +113,8 @@ function groundUnder(rows: string[], x: number, y: number): number {
   return best;
 }
 
-/** Groups enemies standing near each other, numbered west to east. A group is unique if any member is. */
-function groupEnemies(all: (EncounterDef['enemies'][number] & { unique: boolean })[]): EncounterDef[] {
+/** Groups enemies standing near each other, numbered west to east (or named, if a member has a group name). */
+function groupEnemies(all: PlacedEnemy[]): EncounterDef[] {
   const groups: (typeof all)[] = [];
   const left = [...all];
   while (left.length) {
@@ -124,8 +132,8 @@ function groupEnemies(all: (EncounterDef['enemies'][number] & { unique: boolean 
   return groups
     .sort((a, b) => minX(a) - minX(b))
     .map((g, i) => ({
-      id: `group-${i + 1}`,
-      unique: g.some((e) => e.unique),
+      id: g.find((e) => e.group)?.group ?? `group-${i + 1}`,
+      unique: false,
       enemies: g.map(({ type, x, y }) => ({ type, x, y })),
     }));
 }

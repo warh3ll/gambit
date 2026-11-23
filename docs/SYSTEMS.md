@@ -57,7 +57,7 @@ All of them share one foundation: a **game state** that is saved and loaded. Tha
 
 ---
 
-## 2. Scripted events
+## 2. Scripted events — ✅ built in M11
 
 **Proposal**
 - An **event** is a short list of steps, written in a data file, that run in order. For example:
@@ -228,7 +228,7 @@ Each step ends with something playable, like the milestones so far.
 |---|---|---|
 | M9 ✅ | **Game state & saving** | Everything else stores its data here. |
 | M10 ✅ | **Areas & travel** (2 areas from the slice + exits, NPC you can click) | The world everything else happens in. |
-| M11 | **Event scripting** (steps, triggers, flags, choices) | Story drives party changes and unlocks. |
+| M11 ✅ | **Event scripting** (steps, triggers, flags, choices) | Story drives party changes and unlocks. |
 | M12 | **Roster & party manager** (join/leave from events, P screen) | Needs events to add/remove members. |
 | M13 | **XP & levels** | Needs saving; feeds the trees. |
 | M14 | **Progression trees** (one full tree as the example, the rest as stubs) | Needs XP; adds new tactic Actions. |

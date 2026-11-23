@@ -10,11 +10,14 @@ export type Marker = (
   { start: string }
   /** Stepping here moves the party to another area, arriving at that area's start point `at`. */
   | { exit: { to: string; at: string } }
-  /** An enemy. Enemies close together form one group. `unique` groups stay beaten; all others respawn. */
-  | { enemy: EnemyTypeId; unique?: boolean }
+  /**
+   * An enemy. Enemies close together form one group. Give one of them a `group` name to refer to the group
+   * (in `encounters` below, or from an event: fight('stranger')).
+   */
+  | { enemy: EnemyTypeId; group?: string }
   /** A character to talk to (see src/data/npcs.ts). */
   | { npc: string }
-  /** A story trigger (see TRIGGERS in src/data/story.ts): plays once, when the leader steps on it. */
+  /** A story trigger: plays the event with this id (src/data/story.ts) once, when the leader steps on it. */
   | { trigger: string }
 ) & { tile?: TileName };
 
@@ -28,4 +31,15 @@ export interface AreaDef {
   map: string[];
   /** This area's markers, on top of the shared ones (party start '@' and the common enemies). */
   legend?: Record<string, Marker>;
+  /** Settings for named enemy groups. Groups without settings respawn and have no event. */
+  encounters?: Record<string, EncounterSettings>;
+  /** Event (src/data/story.ts) that plays every time the party arrives in this area. */
+  onEnter?: string;
+}
+
+export interface EncounterSettings {
+  /** Stays beaten once beaten (story/boss fights). Other groups respawn every time the area loads. */
+  unique?: boolean;
+  /** Event (src/data/story.ts) that plays when this fight is won. */
+  onWin?: string;
 }
