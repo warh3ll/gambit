@@ -4,7 +4,8 @@
 - The user is the game designer; Claude is the developer. When a design choice is unclear, ask
   instead of guessing, and record the answer in `docs/PLAN.md` (Decisions log).
 - Read `docs/PLAN.md` at the start of a session — the designer edits it between sessions.
-- Work on a branch (`feature/…`, `setup/…`, `fix/…`). Never merge to `main` or push without the designer's go-ahead.
+- Work on a branch (`feature/…`, `setup/…`, `fix/…`). Never merge to `main` without the designer's go-ahead.
+  Every merge into `main` is pushed to GitHub (`origin`) right away.
   After a branch is merged into `main`, delete it (`git branch -d`, and on GitHub too if it was pushed).
 
 ## Project
