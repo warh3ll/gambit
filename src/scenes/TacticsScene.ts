@@ -9,6 +9,7 @@ import {
   TYPES,
   type TypeId,
 } from '../data/tactics';
+import { saveTactics } from '../game/tacticsStore';
 import { pixelCamera, sharpenText, textStyle, type ViewSize } from '../view';
 import type { Party } from '../world/Party';
 import type { PartyMember } from '../world/PartyMember';
@@ -46,7 +47,7 @@ interface Layout {
 /**
  * The tactics editor (opened with T). Pauses the game while open.
  * One character at a time: click a cell to pick from a list, drag ≡ to reorder,
- * the box switches a row on/off, × removes it. Changes apply immediately.
+ * the box switches a row on/off, × removes it. Changes apply immediately and are saved in the browser.
  */
 export class TacticsScene extends Phaser.Scene {
   private party!: Party;
@@ -164,6 +165,11 @@ export class TacticsScene extends Phaser.Scene {
     add(this.add.text(L.px + 72, L.py + 10, 'Game paused', textStyle(10, C.muted)));
     const close = add(this.add.text(L.px + L.pw - 8, L.py + 7, 'Close [T]', textStyle(10, C.text)).setOrigin(1, 0));
     close.setInteractive({ useHandCursor: true }).on('pointerdown', () => this.close());
+    const reset = add(
+      this.add.text(close.x - close.width - 14, L.py + 7, 'Reset to defaults', textStyle(10, C.muted)).setOrigin(1, 0),
+    );
+    reset.setInteractive({ useHandCursor: true }).on('pointerdown', () => this.resetToDefaults());
+    reset.on('pointerover', () => reset.setColor(C.text)).on('pointerout', () => reset.setColor(C.muted));
 
     this.buildTabs(add);
     this.buildInfo(add);
@@ -433,9 +439,17 @@ export class TacticsScene extends Phaser.Scene {
     this.drag.marker.setY(L.rowsTop + (below ? to + 1 : to) * L.rowH - 2);
   }
 
-  /** Something was edited: rebuild on the next frame (not inside the click handler that caused it). */
+  /** Puts this character's rows back to their starting tactics. */
+  private resetToDefaults() {
+    this.closeDropdown();
+    this.member.tactics = this.member.def.tactics.map((r) => ({ ...r }));
+    this.changed();
+  }
+
+  /** Something was edited: save, and rebuild on the next frame (not inside the click handler that caused it). */
   private changed() {
     this.member.thinkTimer = 0;
+    saveTactics(this.party.members);
     this.dirty = true;
   }
 

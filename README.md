@@ -20,7 +20,7 @@ npm run preview   # serve the production build
 |---|---|
 | Left click (map) | Move the party (outside combat) |
 | Click a portrait | Make that character the leader |
-| T | Open / close the tactics editor (pauses the game) |
+| T | Open / close the tactics editor (pauses the game). Edits are saved in the browser. |
 
 ## Debug keys (temporary)
 

@@ -168,8 +168,12 @@ export class Unit implements Combatant {
     return !this.alive;
   }
 
-  heal(amount: number) {
-    if (this.alive) this.hp = Math.min(this.maxHp, this.hp + amount);
+  /** Restores HP; returns how much was actually restored. */
+  heal(amount: number): number {
+    if (!this.alive) return 0;
+    const before = this.hp;
+    this.hp = Math.min(this.maxHp, this.hp + amount);
+    return this.hp - before;
   }
 
   /** Brings a fallen unit back with the given HP. */

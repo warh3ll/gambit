@@ -45,6 +45,8 @@ refining those tactics.
 | `src/data/enemies.ts` | Enemy types: stats, aggro radius, preset tactics |
 | `src/systems/CombatManager.ts` | Starts fights on proximity, pulls in groups, ends fights |
 | `src/systems/CombatSystem.ts` | Runs tactics: picks rows, walks into range, performs actions, projectiles |
+| `src/systems/CombatText.ts` | Floating combat text: damage, heals, buff/debuff names |
+| `src/game/tacticsStore.ts` | Saves edited tactics in the browser (localStorage) |
 | `src/world/` | Units (party members, enemies), party formation, placeholder test map + encounters |
 | `src/scenes/` | Phaser scenes: Boot (placeholder art), World (map + movement), UI (HUD/portraits), Tactics (editor) |
 | `src/view.ts` | Full-window pixel camera (whole-number zoom), UI font and text style |
@@ -100,11 +102,14 @@ More classes and characters can be found later in the game.
 - Can be opened at any time, including mid-fight; combat pauses while it is open.
 - *Notes:* **T** opens/closes (also Esc). One character per tab (click a tab, keys 1–5 or ←/→).
   Click a cell to pick from a list; drag the dots to reorder; the box switches a row on/off; x removes it.
-  Edits apply to the live party immediately. Edited tactics are not saved between page reloads yet.
+  Edits apply to the live party immediately, and are saved in the browser (see M5).
 
-### M5 — Readability of combat
-- Highlight which row fired for each character (key for debugging your "program").
-- Floating damage/heal numbers, a simple combat log.
+### M5 — Readability of combat ✅ *(branch `feature/combat-readability`)*
+- Floating text over the unit it happens to: **white** damage numbers, **green** heal numbers,
+  **gold** ability name on an ally that gets a buff (Ward), **purple** ability name on an enemy that gets a debuff (Hex, Taunt).
+- Edited tactics are saved in the browser (localStorage) and survive a reload. "Reset to defaults" in the
+  editor puts the shown character back to their starting rows.
+- *Not doing:* showing which row fired during a fight (designer's call). A combat log is not planned for now.
 
 ### M6 — Slice content
 - A small area with 3–4 escalating encounters and a final fight that tests the player's tactics.
@@ -140,6 +145,9 @@ More classes and characters can be found later in the game.
 | 2026-11-22 | Tactics also run outside combat (e.g. healing), with the same cooldowns, on targets already in range. |
 | 2026-11-22 | If no row fires, the character stays with the party and does nothing. |
 | 2026-11-22 | Skills on cooldown are skipped (next row gets a turn); the basic Attack waits for its next swing instead. |
+| 2026-11-23 | No in-fight indicator of which tactic row fired. |
+| 2026-11-23 | Floating combat text: white damage, green heals, gold ability name on buffed allies, purple ability name on debuffed enemies. Taunt counts as a debuff. |
+| 2026-11-23 | Edited tactics are saved in the browser (localStorage) for now, until there is a real save system. |
 
 ## Open questions for the designer
 

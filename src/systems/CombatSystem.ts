@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { ACTIONS, type ActionDef, type ActionId } from '../data/tactics';
 import type { TacticContext } from '../game/types';
 import type { Unit } from '../world/Unit';
+import { CombatText } from './CombatText';
 import type { Pathfinder, Point } from './Pathfinder';
 import { decide } from './TacticEngine';
 
@@ -53,10 +54,12 @@ export class CombatSystem {
   private projectiles: Projectile[] = [];
   /** Units currently stepping back from an enemy. */
   private readonly retreating = new WeakSet<Unit>();
+  private readonly text: CombatText;
 
   constructor(scene: Phaser.Scene, pathfinder: Pathfinder) {
     this.scene = scene;
     this.pathfinder = pathfinder;
+    this.text = new CombatText(scene);
   }
 
   update(dt: number, party: Unit[], enemies: Unit[], inCombat: boolean) {
@@ -269,7 +272,7 @@ export class CombatSystem {
         break;
       }
       case 'heal':
-        target.heal(e.power);
+        this.text.heal(target, target.heal(e.power));
         this.ring(target, RING_COLORS.heal);
         break;
       case 'taunt':
@@ -277,14 +280,17 @@ export class CombatSystem {
         target.targetId = u.id;
         target.thinkTimer = 0;
         this.ring(target, RING_COLORS.taunt);
+        this.text.status(target, action.label, 'debuff');
         break;
       case 'debuff':
         target.addStatus(e.status, e.duration, u.id);
         this.ring(target, RING_COLORS.debuff);
+        this.text.status(target, action.label, 'debuff');
         break;
       case 'buff':
         target.addStatus(e.status, e.duration, u.id);
         this.ring(target, RING_COLORS.buff);
+        this.text.status(target, action.label, 'buff');
         break;
     }
   }
@@ -292,7 +298,9 @@ export class CombatSystem {
   private dealDamage(target: Unit, power: number) {
     let amount = power;
     for (const [status, mult] of Object.entries(DAMAGE_TAKEN)) if (target.hasStatus(status)) amount *= mult;
-    target.takeDamage(Math.max(1, Math.round(amount)));
+    const dealt = Math.max(1, Math.round(amount));
+    target.takeDamage(dealt);
+    this.text.damage(target, dealt);
   }
 
   // ── visuals ──

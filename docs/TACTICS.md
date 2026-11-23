@@ -28,6 +28,10 @@ whose action is ready (off cooldown), and that finds a valid target, is the one 
 
 Tactics can be edited at any time, **including in the middle of a fight** — press **T** to open the editor;
 combat pauses while it is open. Click a cell to change it, drag the dots to reorder, the box switches a row on/off.
+Edits are saved in the browser, so they survive a reload; **Reset to defaults** restores a character's starting rows.
+
+In a fight, floating text shows what happened: **white** damage, **green** heals, the ability name in **gold**
+over an ally that got a buff, and in **purple** over an enemy that got a debuff (Hex, Taunt).
 
 The implementation lives in [`src/data/tactics.ts`](../src/data/tactics.ts). This page is the
 design-side list — add ideas to the *Planned* sections and they'll get built.

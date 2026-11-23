@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { DEFAULT_LEADER_ID, PARTY } from '../data/party';
+import { loadSavedTactics } from '../game/tacticsStore';
 import type { Pathfinder, Point } from '../systems/Pathfinder';
 import { PartyMember } from './PartyMember';
 
@@ -40,6 +41,7 @@ export class Party extends Phaser.Events.EventEmitter {
     super();
     this.pathfinder = pathfinder;
     this.members = PARTY.map((def) => new PartyMember(scene, def, spawn.x, spawn.y));
+    loadSavedTactics(this.members);
     this.leader = this.members.find((m) => m.def.id === DEFAULT_LEADER_ID) ?? this.members[0];
     this.speed = Math.min(...PARTY.map((d) => d.speed));
 
